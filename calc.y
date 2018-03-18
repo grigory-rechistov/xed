@@ -113,6 +113,7 @@ mem_spec:
 // VADDPD zmm0 {k1},zmm1,zmm3,{rz-sae}
 // vaddps zmm7 {k6}, zmm2, zmm4, {rd-sae}
 //  disp8*N.
+//  vpcompressd [rdi] {k1}, zmm1 - memory and masking from here: https://blogs.msdn.microsoft.com/vcblog/2017/07/11/microsoft-visual-studio-2017-supports-intel-avx-512/
 
 // V4FMADDPS zmm1{k1}{z}, zmm2+3, m128 - a pair of zmm registers
 
