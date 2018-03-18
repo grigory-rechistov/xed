@@ -18,16 +18,23 @@ void yyerror(const char* s);
     char *opcode;
     char *constant;
     char *memwidth;
+    char *broadcastspec;
+    char *roundingspec;
 }
 
 %token<prefix> TOK_REP_PREF
 %token<prefix> TOK_LOCK_PREF
+
 %token<regname> TOK_GPR
 %token<regname> TOK_VEC_REG
-%token<opcode> TOK_OPCODE
+%token<regname> TOK_MASK_REG
+%token<regname> TOK_SEG_REG
+%token<regname> TOK_FPU_REG
+
 %token<constant> TOK_CONSTANT
 %token<memwidth> TOK_MEMWIDTH
-%token<regname> TOK_SEGREG
+
+%token<opcode> TOK_OPCODE
 
 %token T_NEWLINE
 %token TOK_COMMA
@@ -36,6 +43,14 @@ void yyerror(const char* s);
 %token TOK_PLUS
 %token TOK_MULTI
 %token TOK_COLON
+%token TOK_LCUBR
+%token TOK_RCUBR
+%token TOK_ZEROING
+%token TOK_ER
+%token TOK_SAE
+
+%token<broadcastspec> TOK_BCAST
+%token<roundingspec> TOK_ROUNDING
 
 %start toplevelexpr
 
@@ -76,13 +91,13 @@ register: TOK_GPR
 immediate: TOK_CONSTANT // all types of literals
 ;
 
-lea_spec: TOK_LSQBR mem_expr TOK_RSQBR { printf("lea_spec\n"); }
+lea_spec: TOK_LSQBR mem_expr TOK_RSQBR { printf("lea_spec\n"); } /* LEA do not use "mem ptr" */
 ;
 
 
 mem_spec:
-      TOK_MEMWIDTH TOK_SEGREG TOK_COLON TOK_LSQBR mem_expr TOK_RSQBR { printf("seg:memory\n"); }// TODO support segment override
-    | TOK_MEMWIDTH TOK_LSQBR mem_expr TOK_RSQBR { printf("def:memory\n"); }// TODO support segment override
+      TOK_MEMWIDTH TOK_SEG_REG TOK_COLON TOK_LSQBR mem_expr TOK_RSQBR { printf("seg:memory\n"); } /* segment override */
+    | TOK_MEMWIDTH TOK_LSQBR mem_expr TOK_RSQBR { printf("def:memory\n"); } /* default segment */
 ;
 
 
@@ -90,6 +105,14 @@ mem_spec:
 // mov    DWORD PTR [rbx+rdx*4+0x20],ecx
 // lea    ecx,[rsi*8+0x0]
 // nop    WORD PTR cs:[rax+rax*1+0x0]
+
+
+/* TODO support these notations: */
+// enterq $0x1412,$0x5
+// VADDPD zmm0 {k1},zmm1,zmm3,{rz-sae}
+// vaddps zmm7 {k6}, zmm2, zmm4, {rd-sae}
+//  disp8*N.
+// vgatherdpd zmm30{k1},qword [r14+ymm31*8+0x7b]
 
 mem_expr: TOK_GPR
         | TOK_GPR TOK_PLUS TOK_GPR
