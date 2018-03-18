@@ -65,23 +65,25 @@ line: T_NEWLINE
 
 ;
 
-asmline: TOK_OPCODE
-      | TOK_REP_PREF TOK_OPCODE
-      | TOK_LOCK_PREF TOK_OPCODE
-      | TOK_OPCODE operands
+asmline: TOK_REP_PREF TOK_OPCODE
+       | TOK_LOCK_PREF TOK_OPCODE
+       | TOK_OPCODE operands
 ;
 
-operands: register
+operands: /* no operands */
+        | operand
+        | operands TOK_COMMA operand
+;
+
+operand:  register
+        | immediate
         | lea_spec
         | mem_spec
-        | immediate
-        | operands TOK_COMMA register
-        | operands TOK_COMMA immediate
-        | operands TOK_COMMA lea_spec
-        | operands TOK_COMMA mem_spec
+        | vec_register_masked
+        | broadcast_expr
         // | far_ptr_spec
         // | segment reg, debug reg, control reg, x87 fpu, bnd reg
-        // | {kreg}, {b}, {sae}, {er}
+        // | {kreg}, {sae}, {er}
 ;
 
 register: TOK_GPR
@@ -94,7 +96,6 @@ immediate: TOK_CONSTANT // all types of literals
 lea_spec: TOK_LSQBR mem_expr TOK_RSQBR { printf("lea_spec\n"); } /* LEA do not use "mem ptr" */
 ;
 
-
 mem_spec:
       TOK_MEMWIDTH TOK_SEG_REG TOK_COLON TOK_LSQBR mem_expr TOK_RSQBR { printf("seg:memory\n"); } /* segment override */
     | TOK_MEMWIDTH TOK_LSQBR mem_expr TOK_RSQBR { printf("def:memory\n"); } /* default segment */
@@ -105,21 +106,35 @@ mem_spec:
 // mov    DWORD PTR [rbx+rdx*4+0x20],ecx
 // lea    ecx,[rsi*8+0x0]
 // nop    WORD PTR cs:[rax+rax*1+0x0]
-
+// vgatherdpd zmm30{k1},qword [r14+ymm31*8+0x7b]
 
 /* TODO support these notations: */
 // enterq $0x1412,$0x5
 // VADDPD zmm0 {k1},zmm1,zmm3,{rz-sae}
 // vaddps zmm7 {k6}, zmm2, zmm4, {rd-sae}
 //  disp8*N.
-// vgatherdpd zmm30{k1},qword [r14+ymm31*8+0x7b]
 
-mem_expr: TOK_GPR
-        | TOK_GPR TOK_PLUS TOK_GPR
-        | TOK_GPR TOK_PLUS TOK_CONSTANT
-        | TOK_GPR TOK_PLUS TOK_GPR TOK_MULTI TOK_CONSTANT
-        | TOK_GPR TOK_PLUS TOK_GPR TOK_MULTI TOK_CONSTANT TOK_PLUS TOK_CONSTANT
-        // | vsib_spec
+// V4FMADDPS zmm1{k1}{z}, zmm2+3, m128 - a pair of zmm registers
+
+
+mem_expr: TOK_GPR /* single GPR */
+        | TOK_GPR TOK_PLUS TOK_GPR /* GPR + GPR (16-bit specific) */
+        | TOK_GPR TOK_PLUS TOK_CONSTANT /* GPR + offset */
+        | TOK_GPR TOK_PLUS TOK_GPR TOK_MULTI TOK_CONSTANT /* Base + Index GPR * Scale */
+        | TOK_GPR TOK_PLUS TOK_GPR TOK_MULTI TOK_CONSTANT TOK_PLUS TOK_CONSTANT /* Base + Index GPR * Scale + constant */
+        | vsib_mem_expr
+;
+
+vsib_mem_expr:
+        | TOK_GPR TOK_PLUS TOK_VEC_REG TOK_MULTI TOK_CONSTANT /* Base + Index Vector * Scale */
+        | TOK_GPR TOK_PLUS TOK_VEC_REG TOK_MULTI TOK_CONSTANT TOK_PLUS TOK_CONSTANT /* Base + Index Vector * Scale + constant */
+;
+
+vec_register_masked: TOK_VEC_REG TOK_LCUBR TOK_MASK_REG TOK_RCUBR /* zmm30 {k3}*/
+                   | TOK_VEC_REG TOK_LCUBR TOK_MASK_REG TOK_RCUBR TOK_ZEROING /* zmm30 {k3} {z}*/
+;
+
+broadcast_expr: TOK_BCAST
 ;
 
 %%

@@ -41,9 +41,9 @@ st[0-7] {yylval.regname = yytext; return TOK_FPU_REG;} /* x87 FPU regs */
 
 
 k[0-7] {yylval.regname = yytext; return TOK_MASK_REG;} /* opmask registers */
-z {return TOK_ZEROING;} /* vector mask zeroing specifier */
-er {return TOK_ER;} /* embedded rounding */
-sae {return TOK_SAE;} /* suppress all exceptions */
+"{z}" {return TOK_ZEROING;} /* vector mask zeroing specifier */
+"{er}" {return TOK_ER;} /* embedded rounding */
+"{sae}" {return TOK_SAE;} /* suppress all exceptions */
 
 "{1to"[0-9]+"}" {yylval.broadcastspec = yytext; return TOK_BCAST;}  /* broadcast {1to16} */
 "{r"[nduz]"-sae}" {yylval.roundingspec = yytext; return TOK_ROUNDING;}  /* embedded rounding
