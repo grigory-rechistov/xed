@@ -1,11 +1,22 @@
+/*
+ Parser for assembly in Intel notation
+ */
+
+%code requires {
+#include "xed-encode.h"
+}
+
+%parse-param { xed_encoder_request_t *req }
+
 %{
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "xed-encode.h"
 
 #define YYDEBUG 1
 
-extern void yyerror(const char* s);
+extern void yyerror(xed_encoder_request_t *req, const char* s);
 
 %}
 
