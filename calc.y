@@ -5,11 +5,8 @@
 
 #define YYDEBUG 1
 
-extern FILE* yyin;
-extern int yylex();
-extern int yyparse();
+extern void yyerror(const char* s);
 
-void yyerror(const char* s);
 %}
 
 %union {
@@ -139,17 +136,3 @@ broadcast_expr: TOK_BCAST
 ;
 
 %%
-
-int main() {
-    yyin = stdin;
-    do {
-        yyparse();
-    } while(!feof(yyin));
-    return 0;
-}
-
-void yyerror(const char* s) {
-    fprintf(stderr, "Parsing error: %s\n", s);
-    exit(1);
-}
-

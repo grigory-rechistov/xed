@@ -9,8 +9,8 @@ lex.yy.c: calc.l calc.tab.h
 calc.tab.c calc.tab.h:	calc.y
 	$(BISON) --debug -d calc.y
 
-calc: lex.yy.c calc.tab.c calc.tab.h
-	$(CC) -o calc calc.tab.c lex.yy.c
+calc: main.c lex.yy.c calc.tab.c calc.tab.h
+	$(CC) -o calc calc.tab.c lex.yy.c main.c
 
 clean:
 	rm -f calc calc.tab.c lex.yy.c calc.tab.h
