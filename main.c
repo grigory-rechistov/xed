@@ -3,9 +3,8 @@
 #include <errno.h>
 #include <stdlib.h>
 
-extern FILE* yyin;
-extern int yylex();
-extern int yyparse();
+#include "lexer.h"
+#include "calc.tab.h"
 
 int main(int argc, char **argv) {
 
