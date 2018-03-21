@@ -5,6 +5,8 @@ CFLAGS := -std=c99 -Wall -Werror
 
 all: calc
 
+parser: lex.yy.c calc.tab.c
+
 lex.yy.c: calc.l calc.tab.h
 	$(FLEX) --header-file=lexer.h calc.l
 
