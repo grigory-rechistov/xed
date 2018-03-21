@@ -16,7 +16,10 @@
 
 #define YYDEBUG 1
 
+extern int yylex(void);
 extern void yyerror(xed_encoder_request_t *req, const char* s);
+
+
 
 %}
 

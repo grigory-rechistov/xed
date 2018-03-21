@@ -1,5 +1,7 @@
+CC := gcc
 FLEX := flex
 BISON := bison
+CFLAGS := -std=c99 -Wall -Werror
 
 all: calc
 
@@ -10,10 +12,10 @@ calc.tab.c calc.tab.h:	calc.y
 	$(BISON) -d calc.y
 
 calc: main.c lex.yy.c calc.tab.c calc.tab.h
-	$(CC) -o calc calc.tab.c lex.yy.c main.c
+	$(CC) $(CFLAGS) -o calc calc.tab.c lex.yy.c main.c
 
 clean:
-	rm -f calc calc.tab.c lex.yy.c calc.tab.h lexer.h
+	rm -f calc calc.tab.c lex.yy.c calc.tab.h lexer.h *.o
 
 test: calc
 	cat test.s | ./calc

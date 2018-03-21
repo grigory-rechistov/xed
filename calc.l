@@ -1,11 +1,17 @@
+
+%option noinput
+%option nounput
+%option noyywrap
+%option never-interactive
+
 %{
+//#define _POSIX_C_SOURCE 1000
+
 #include <stdio.h>
 
-#define YY_DECL int yylex()
+int fileno(FILE *stream);
 
 #include "calc.tab.h"
-
-int yywrap(void){ return 1;}
 
 %}
 
