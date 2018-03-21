@@ -81,7 +81,16 @@ line: T_NEWLINE
 
 asmline: TOK_REP_PREF TOK_OPCODE
        | TOK_LOCK_PREF TOK_OPCODE
-       | TOK_OPCODE operands
+       | TOK_OPCODE operands {
+                xed_iclass_enum_t iclass = XED_ICLASS_INVALID;
+                iclass =  str2xed_iclass_enum_t($1);
+                if (iclass == XED_ICLASS_INVALID) {
+                    fprintf(stderr,"[XED CLIENT ERROR] Bad instruction name: %s\n",
+                        $1);
+                exit(1);
+            }
+            xed_encoder_request_set_iclass(req, iclass );
+}
 ;
 
 operands: /* no operands */
