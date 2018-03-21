@@ -654,3 +654,10 @@ parse_encode_request(ascii_encode_request_t areq)
     }
     return req;
 }
+
+/* TODO implement better error reporting */
+void yyerror(xed_encoder_request_t *req, const char* s)
+{
+    fprintf(stderr, "[XED_CLIENT_ERROR] Scanner parsing error: %s\n", s);
+    exit(1);
+}
