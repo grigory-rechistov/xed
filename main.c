@@ -10,11 +10,10 @@ int main(int argc, char **argv) {
 
     xed_encoder_request_t *req = NULL;
     if (argc >1 ) {
-    char* input = argv[1];
-    YY_BUFFER_STATE buffer = yy_scan_string(input);
-    yyparse(req);
-    yy_delete_buffer(buffer);
-
+        char* input = argv[1];
+        YY_BUFFER_STATE buffer = yy_scan_string(input);
+        yyparse(req);
+        yy_delete_buffer(buffer);
     } else {
         yyin = stdin;
         do {
