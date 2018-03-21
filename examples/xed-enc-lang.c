@@ -26,6 +26,24 @@ END_LEGAL */
 #include "xed-examples-util.h"
 #include "xed-enc-lang.h"
 
+#include "calc.tab.h"
+#include "lexer.h"
+
+#if 1
+
+xed_encoder_request_t
+parse_encode_request(ascii_encode_request_t areq)
+{
+
+    xed_encoder_request_t req;
+    xed_encoder_request_zero_set_mode(&req,&(areq.dstate));
+
+    YY_BUFFER_STATE buffer = yy_scan_string(areq.command);
+    yyparse(&req);
+    yy_delete_buffer(buffer);
+    return req;
+}
+#else
 
 static char xed_enc_lang_toupper(char c) {
     if (c >= 'a' && c <= 'z')
@@ -328,7 +346,6 @@ static void find_vl(xed_reg_enum_t reg, xed_int_t* vl)
     else if (rc == XED_REG_CLASS_ZMM && nvl < 2) // not set, set to xmm or ymm and then see zmm
         *vl = 2;
 }
-
 
 xed_encoder_request_t
 parse_encode_request(ascii_encode_request_t areq)
@@ -654,6 +671,7 @@ parse_encode_request(ascii_encode_request_t areq)
     }
     return req;
 }
+#endif
 
 /* TODO implement better error reporting */
 void yyerror(xed_encoder_request_t *req, const char* s)

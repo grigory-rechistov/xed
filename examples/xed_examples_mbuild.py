@@ -307,6 +307,8 @@ def build_examples(env, work_queue):
         
     if env['encoder']:
        cc_shared_files += env.src_dir_join([ 'xed-enc-lang.c'])
+       cc_shared_files += env.src_dir_join([ 'calc.tab.c'])
+       cc_shared_files += env.src_dir_join([ 'lex.yy.c'])
     cc_shared_objs  = env.compile( examples_dag, cc_shared_files)
     # the XED command line tool
     xed_cmdline_files = [ 'xed-disas-raw.c',
@@ -372,7 +374,7 @@ def build_examples(env, work_queue):
                             'xed-reps.c',
                             'xed-ex4.c',
                             'xed-tester.c',
-                            'xed-dec-print.c',           
+                            'xed-dec-print.c',
                             'xed-ex-agen.c',
                             'xed-ex7.c',
                             'xed-ex8.c',
