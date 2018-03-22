@@ -5,15 +5,31 @@
 %code requires {
 #include "xed-encode.h"
 
-#define YY_DECL int yylex(xed_encoder_request_t *req)
 
 // remove when done debugging
 #undef YYDEBUG
 #define YYDEBUG 1
-}
 
-%lex-param { xed_encoder_request_t *req }
-%parse-param { xed_encoder_request_t *req }
+typedef struct {
+    xed_state_t* dstate;
+    xed_uint_t operand_index;
+    xed_uint_t regnum;
+    
+} decoder_state_t; /* TODO better name */
+
+#define YY_DECL int yylex(xed_encoder_request_t *req, decoder_state_t *s)
+
+int yylex(xed_encoder_request_t *req, decoder_state_t *s);
+void yyerror(xed_encoder_request_t *req, decoder_state_t *state, const char* str);
+
+
+} // code requires
+
+%lex-param { xed_encoder_request_t *req}
+%lex-param { decoder_state_t *s}
+%parse-param { xed_encoder_request_t *req}
+%parse-param { decoder_state_t *s}
+
 
 %{
 
@@ -21,13 +37,13 @@
 #include <stdlib.h>
 #include "xed-encode.h"
 
-extern int yylex(xed_encoder_request_t *req);
-extern void yyerror(xed_encoder_request_t *req, const char* s);
+//extern void yyerror(xed_encoder_request_t *req, decoder_state_t *state, const char* str);
+
 %}
 
 %union {
-    xed_reg_enum_t regname;
     xed_iclass_enum_t opcode;
+    xed_reg_enum_t regname;
     xed_uint64_t constant;
 
     char memwidth;
@@ -36,11 +52,13 @@ extern void yyerror(xed_encoder_request_t *req, const char* s);
     char garbage[100];
 }
 
+%token<opcode> TOK_OPCODE
+%token<regname> TOK_GPR
+
 %token TOK_REPE_PREF
 %token TOK_REPNE_PREF
 %token TOK_LOCK_PREF
 
-%token TOK_GPR
 %token TOK_VEC_REG
 %token TOK_MASK_REG
 %token TOK_SEG_REG
@@ -49,7 +67,6 @@ extern void yyerror(xed_encoder_request_t *req, const char* s);
 %token TOK_CONSTANT
 %token TOK_MEMWIDTH
 
-%token TOK_OPCODE
 
 %token T_NEWLINE
 %token TOK_COMMA
@@ -92,6 +109,7 @@ operands: /* no operands */
 ;
 
 operand:  register
+        | vector_register
         | immediate
         | lea_spec
         | mem_spec
@@ -102,8 +120,37 @@ operand:  register
         // | {kreg}, {sae}, {er}
 ;
 
-register: TOK_GPR
-        | TOK_VEC_REG
+register: TOK_GPR {
+        xed_reg_enum_t reg_name = $1;
+
+        if (s->dstate->mmode != XED_MACHINE_MODE_LONG_64)
+            if (reg_name == XED_REG_DIL || reg_name == XED_REG_SPL
+            ||  reg_name == XED_REG_BPL || reg_name == XED_REG_SIL)
+            {
+                fprintf(stderr,
+                    "[XED CLIENT ERROR] Cannot use DIL/SPL/BPL/SIL outside of 64b mode\n");
+                exit(1);
+            }
+        // The registers operands are numbered starting from the first one
+        // as XED_OPERAND_REG0. We increment regnum (below) every time we
+        // add a register operand.
+        xed_operand_enum_t reg_pos = XED_CAST(xed_operand_enum_t,
+                                                XED_OPERAND_REG0 + s->regnum);
+        
+        // store the register identifier in the operand storage field
+        xed_encoder_request_set_reg(req, reg_pos, reg_name);
+        
+        // store the operand storage field name in the encode-order array
+        xed_encoder_request_set_operand_order(req, s->operand_index, reg_pos);
+
+        // find_vl(reg, &vl); FIXME reenable me
+        
+        s->operand_index++;
+        s->regnum++;
+}
+;
+
+vector_register: TOK_VEC_REG
 ;
 
 immediate: TOK_CONSTANT // all types of literals

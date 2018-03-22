@@ -1,9 +1,11 @@
 /* Parser for assembly in Intel notation for XED */
 
+/* Do not generate unused functions */
 %option noinput
 %option nounput
 %option noyywrap
-/* do not use istty() */
+
+/* Do not use istty() */
 %option never-interactive
 
 %{
@@ -35,7 +37,16 @@ REPNE|REPNZ { xed_encoder_request_set_repne(req);
 LOCK { printf("FIXME lock prefix not handled\n");
       return TOK_LOCK_PREF;}
 
-(E|R)?[ABCD]X {DUP_YYTEXT(); return TOK_GPR;} /* RAX-RBX */
+ /* RAX-RBX and their classic subparts */
+(E|R)?[ABCD]X { xed_reg_enum_t reg = str2xed_reg_enum_t(yytext);
+                if (reg == XED_REG_INVALID) {
+                    fprintf(stderr,
+                        "[XED CLIENT ERROR] Bad register name: %s\n", yytext);
+                    exit(1);
+                }
+                yylval.regname = reg;
+                return TOK_GPR;}
+
 (E|R)?[SD]I {DUP_YYTEXT(); return TOK_GPR;} /* RSI, RDI */
 (E|R)?[BS]P {DUP_YYTEXT(); return TOK_GPR;} /* RBP, RSP */
 R[0-9]+ {DUP_YYTEXT(); return TOK_GPR;} /* R8-R15, TODO limit number range */
@@ -69,9 +80,11 @@ K[0-7] {DUP_YYTEXT(); return TOK_MASK_REG;} /* opmask registers */
 BYTE|([DQ]?WORD) {DUP_YYTEXT(); return TOK_MEMWIDTH;} /* memory width specifier */
 ([XYZ]MMWORD) {DUP_YYTEXT(); return TOK_MEMWIDTH;} /* memory width specifier for vector commands */
 
+
+ /* This rule must be the last one as it matches all words */
 [A-Z][A-Z0-9]* {
                 xed_iclass_enum_t iclass = XED_ICLASS_INVALID;
-                printf("opcode = '%s'\n", yytext);
+                printf("lex opcode = '%s'\n", yytext);
                 iclass =  str2xed_iclass_enum_t(yytext);
                 if (iclass == XED_ICLASS_INVALID) {
                     fprintf(stderr,
@@ -80,7 +93,7 @@ BYTE|([DQ]?WORD) {DUP_YYTEXT(); return TOK_MEMWIDTH;} /* memory width specifier 
             }
             xed_encoder_request_set_iclass(req, iclass);
             yylval.opcode = iclass;
-            return TOK_OPCODE;} /* this rule must be the last one as it matches all words */
+            return TOK_OPCODE;}
 
 
 \n        {return T_NEWLINE;}
