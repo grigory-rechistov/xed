@@ -1,11 +1,18 @@
 /*
- Parser for assembly in Intel notation
+ Parser for assembly in Intel notation for XED
  */
 
 %code requires {
 #include "xed-encode.h"
+
+#define YY_DECL int yylex(xed_encoder_request_t *req)
+
+// remove when done debugging
+#undef YYDEBUG
+#define YYDEBUG 1
 }
 
+%lex-param { xed_encoder_request_t *req }
 %parse-param { xed_encoder_request_t *req }
 
 %{
@@ -14,39 +21,35 @@
 #include <stdlib.h>
 #include "xed-encode.h"
 
-#define YYDEBUG 1
-
-extern int yylex(void);
+extern int yylex(xed_encoder_request_t *req);
 extern void yyerror(xed_encoder_request_t *req, const char* s);
-
-
-
 %}
 
 %union {
-    char *prefix;
-    char *regname;
-    char *opcode;
-    char *constant;
-    char *memwidth;
-    char *broadcastspec;
-    char *roundingspec;
-    char *garbage;
+    xed_reg_enum_t regname;
+    xed_iclass_enum_t opcode;
+    xed_uint64_t constant;
+
+    char memwidth;
+    char broadcastspec;
+    char roundingspec;
+    char garbage[100];
 }
 
-%token<prefix> TOK_REP_PREF
-%token<prefix> TOK_LOCK_PREF
+%token TOK_REPE_PREF
+%token TOK_REPNE_PREF
+%token TOK_LOCK_PREF
 
-%token<regname> TOK_GPR
-%token<regname> TOK_VEC_REG
-%token<regname> TOK_MASK_REG
-%token<regname> TOK_SEG_REG
-%token<regname> TOK_FPU_REG
+%token TOK_GPR
+%token TOK_VEC_REG
+%token TOK_MASK_REG
+%token TOK_SEG_REG
+%token TOK_FPU_REG
 
-%token<constant> TOK_CONSTANT
-%token<memwidth> TOK_MEMWIDTH
+%token TOK_CONSTANT
+%token TOK_MEMWIDTH
 
-%token<opcode> TOK_OPCODE
+%token TOK_OPCODE
 
 %token T_NEWLINE
 %token TOK_COMMA
@@ -61,11 +64,11 @@ extern void yyerror(xed_encoder_request_t *req, const char* s);
 %token TOK_ER
 %token TOK_SAE
 
-%token<broadcastspec> TOK_BCAST
-%token<roundingspec> TOK_ROUNDING
+%token TOK_BCAST
+%token TOK_ROUNDING
 
 
-%token<garbage> TOK_GARBAGE
+%token TOK_GARBAGE
 
 %start toplevelexpr
 
@@ -79,18 +82,8 @@ line: T_NEWLINE
      | asmline T_NEWLINE { printf("assembly line\n");}
 ;
 
-asmline: TOK_REP_PREF TOK_OPCODE
-       | TOK_LOCK_PREF TOK_OPCODE
-       | TOK_OPCODE operands {
-                xed_iclass_enum_t iclass = XED_ICLASS_INVALID;
-                iclass =  str2xed_iclass_enum_t($1);
-                if (iclass == XED_ICLASS_INVALID) {
-                    fprintf(stderr,"[XED CLIENT ERROR] Bad instruction name: %s\n",
-                        $1);
-                exit(1);
-            }
-            xed_encoder_request_set_iclass(req, iclass );
-}
+/* TODO add handling of single byte prefixes */
+asmline: TOK_OPCODE operands { printf("opcode operands\n");}
 ;
 
 operands: /* no operands */
