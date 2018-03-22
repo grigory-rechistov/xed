@@ -29,22 +29,6 @@ END_LEGAL */
 #include "calc.tab.h"
 #include "lexer.h"
 
-#if 1
-
-xed_encoder_request_t
-parse_encode_request(ascii_encode_request_t areq)
-{
-
-    xed_encoder_request_t req;
-    xed_encoder_request_zero_set_mode(&req,&(areq.dstate));
-
-    YY_BUFFER_STATE buffer = yy_scan_string(areq.command);
-    yyparse(&req);
-    yy_delete_buffer(buffer);
-    return req;
-}
-#else
-
 static char xed_enc_lang_toupper(char c) {
     if (c >= 'a' && c <= 'z')
         return c-'a'+'A';
@@ -53,9 +37,35 @@ static char xed_enc_lang_toupper(char c) {
 
 static void upcase(char* s) {
     char* p = s;
-    for( ;  *p ;  p++ ) 
+    for( ;  *p ;  p++ )
         *p = xed_enc_lang_toupper(*p);
 }
+
+#if 1
+
+xed_encoder_request_t
+parse_encode_request(ascii_encode_request_t areq)
+{
+
+    xed_encoder_request_t req;
+    xed_encoder_request_zero_set_mode(&req,&(areq.dstate));
+    char upcase_command[5000];
+    xed_strncpy(upcase_command, areq.command, sizeof(upcase_command) -1);
+    upcase(upcase_command);
+    /* Concatenation of argv[] adds an extra space at the end,
+     * remove it */
+    size_t len = xed_strlen(upcase_command);
+    if (upcase_command[len-1] == ' ')
+        upcase_command[len-1] = '\0';
+
+    YY_BUFFER_STATE buffer = yy_scan_string(upcase_command);
+    yydebug = 1; // TODO remove
+    yyparse(&req);
+    yy_delete_buffer(buffer);
+    return req;
+}
+#else
+
 
 xed_str_list_t* 
 tokenize(char const* const s,
@@ -439,7 +449,7 @@ parse_encode_request(ascii_encode_request_t areq)
 
     iclass =  str2xed_iclass_enum_t(cfirst);
     if (iclass == XED_ICLASS_INVALID) {
-        fprintf(stderr,"[XED CLIENT ERROR] Bad instruction name: %s\n",
+        fprintf(stderr,"[XED CLIENT ERROR] Bad instruction name: '%s'\n",
                 cfirst);
         exit(1);
     }
