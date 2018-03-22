@@ -29,6 +29,13 @@ END_LEGAL */
 #include "calc.tab.h"
 #include "lexer.h"
 
+/* TODO implement better error reporting */
+void yyerror(xed_encoder_request_t *req, decoder_state_t *state, const char* string)
+{
+    fprintf(stderr, "[XED_CLIENT_ERROR] Scanner parsing error: %s\n", string);
+    exit(1);
+}
+
 static char xed_enc_lang_toupper(char c) {
     if (c >= 'a' && c <= 'z')
         return c-'a'+'A';
@@ -41,7 +48,6 @@ static void upcase(char* s) {
         *p = xed_enc_lang_toupper(*p);
 }
 
-#if 1
 
 xed_encoder_request_t
 parse_encode_request(ascii_encode_request_t areq)
@@ -49,6 +55,12 @@ parse_encode_request(ascii_encode_request_t areq)
 
     xed_encoder_request_t req;
     xed_encoder_request_zero_set_mode(&req,&(areq.dstate));
+    decoder_state_t s = (decoder_state_t){
+                                    .dstate = &areq.dstate,
+                                    .operand_index = 0,
+                                    .regnum = 0
+                                    };
+
     char upcase_command[5000];
     xed_strncpy(upcase_command, areq.command, sizeof(upcase_command) -1);
     upcase(upcase_command);
@@ -60,11 +72,12 @@ parse_encode_request(ascii_encode_request_t areq)
 
     YY_BUFFER_STATE buffer = yy_scan_string(upcase_command);
     yydebug = 1; // TODO remove
-    yyparse(&req);
+    yyparse(&req, &s);
     yy_delete_buffer(buffer);
     return req;
 }
-#else
+
+// ==========================================================================
 
 
 xed_str_list_t* 
@@ -358,7 +371,7 @@ static void find_vl(xed_reg_enum_t reg, xed_int_t* vl)
 }
 
 xed_encoder_request_t
-parse_encode_request(ascii_encode_request_t areq)
+parse_encode_request_original(ascii_encode_request_t areq)
 {
     unsigned int i;
     xed_encoder_request_t req;
@@ -373,7 +386,6 @@ parse_encode_request(ascii_encode_request_t areq)
     xed_iclass_enum_t iclass = XED_ICLASS_INVALID;
     xed_int_t vl = -1;
     xed_int_t uvl = -1;
-    
     
     
     // this calls xed_encoder_request_zero()
@@ -681,11 +693,5 @@ parse_encode_request(ascii_encode_request_t areq)
     }
     return req;
 }
-#endif
 
-/* TODO implement better error reporting */
-void yyerror(xed_encoder_request_t *req, const char* s)
-{
-    fprintf(stderr, "[XED_CLIENT_ERROR] Scanner parsing error: %s\n", s);
-    exit(1);
-}
+
