@@ -72,6 +72,7 @@ parse_encode_request(ascii_encode_request_t areq)
 
     YY_BUFFER_STATE buffer = yy_scan_string(upcase_command);
     yydebug = 1; // TODO remove
+    //yy_flex_debug = 1; // TODO remove
     yyparse(&req, &s);
     yy_delete_buffer(buffer);
     return req;
