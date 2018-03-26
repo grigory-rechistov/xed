@@ -18,6 +18,9 @@
 
 %}
 
+
+
+
 %%
 
 [ \t]   ; // ignore all whitespace and tabs
@@ -31,11 +34,15 @@
 
 
 REP|REPE|REPZ { xed_encoder_request_set_rep(req);
+                s->repe_seen = true;
                 return TOK_REPE_PREF;}
 REPNE|REPNZ { xed_encoder_request_set_repne(req);
-                return TOK_REPNE_PREF;}
+              s->repne_seen = true;
+              return TOK_REPNE_PREF;}
+
 LOCK { printf("FIXME lock prefix not handled\n");
-      return TOK_LOCK_PREF;}
+       s->lock_seen = true;
+       return TOK_LOCK_PREF;}
 
  /* RAX-RBX and their classic subparts */
 (E|R)?[ABCD]X { xed_reg_enum_t reg = str2xed_reg_enum_t(yytext);

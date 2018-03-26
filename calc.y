@@ -1,8 +1,7 @@
-/*
- Parser for assembly in Intel notation for XED
- */
+/* Parser for assembly in Intel notation for XED */
 
 %code requires {
+#include <stdbool.h>
 #include "xed-encode.h"
 
 
@@ -12,9 +11,14 @@
 
 typedef struct {
     xed_state_t* dstate;
-    xed_uint_t operand_index;
-    xed_uint_t regnum;
+    xed_uint_t operand_index; /* sequential number of all operands */
+    xed_uint_t regnum; /* sequential number of register operand */
+    xed_uint_t memop; /* sequential number of memory operand */
     
+    xed_uint_t deduced_operand_size; /* From register size: AX, EAX, RAX */
+    bool repe_seen;
+    bool repne_seen;
+    bool lock_seen;
 } decoder_state_t; /* TODO better name */
 
 #define YY_DECL int yylex(xed_encoder_request_t *req, decoder_state_t *s)
@@ -45,6 +49,9 @@ void yyerror(xed_encoder_request_t *req, decoder_state_t *state, const char* str
     xed_iclass_enum_t opcode;
     xed_reg_enum_t regname;
     xed_uint64_t constant;
+    bool lock_seen;
+    bool repe_seen;
+    bool repne_seen;
 
     char memwidth;
     char broadcastspec;
