@@ -134,9 +134,12 @@ BYTE|([DQ]?WORD) {DUP_YYTEXT(); return TOK_MEMWIDTH;} /* memory width specifier 
 <<EOF>>   {static int once = 0;
            return once++? 0: T_NEWLINE;} /* Hack to turn the first EOF into newline */
 
-;        { DUP_YYTEXT();
-           printf("flex garbage: %s\n", yytext);
-           return TOK_GARBAGE;} /* rule for unmatched input */
+ /* Unrecognized symbols.
+   TODO add tracking of current position for better error reporting */
+.        { fprintf(stderr,
+           "[XED CLIENT ERROR] Unexpected symbol: '%s'\n", yytext);
+           exit(1);
+           return TOK_GARBAGE;}
 
 %%
 
