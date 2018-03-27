@@ -194,9 +194,14 @@ lea_spec: TOK_LSQBR mem_expr TOK_RSQBR { printf("lea_spec\n"); } /* LEA do not u
 ;
 
 mem_spec:
-      TOK_MEMWIDTH TOK_SEG_REG TOK_COLON TOK_LSQBR mem_expr TOK_RSQBR { printf("seg:memory\n"); } /* segment override */
-    | TOK_MEMWIDTH TOK_LSQBR mem_expr TOK_RSQBR { printf("def:memory\n"); } /* default segment */
+      TOK_MEMWIDTH segment_override TOK_LSQBR mem_expr TOK_RSQBR /* segment override */
+    | TOK_MEMWIDTH TOK_LSQBR mem_expr TOK_RSQBR /* default segment */
 ;
+
+segment_override: TOK_SEG_REG TOK_COLON {
+    xed_encoder_request_set_seg0(req, $1);
+    // TODO s->segno ++;
+};
 
 
 // cmp    BYTE PTR [rdx+rax*1-0x1],0xa
