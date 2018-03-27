@@ -10,18 +10,18 @@
 #define YYDEBUG 1
 
 
-#define YY_DECL int yylex(xed_encoder_request_t *req, decoder_state_t *s)
+#define YY_DECL int yylex(xed_encoder_request_t *req, parser_state_t *s)
 
-int yylex(xed_encoder_request_t *req, decoder_state_t *s);
-void yyerror(xed_encoder_request_t *req, decoder_state_t *state, const char* str);
+int yylex(xed_encoder_request_t *req, parser_state_t *s);
+void yyerror(xed_encoder_request_t *req, parser_state_t *state, const char* str);
 
 
 } // code requires
 
 %lex-param { xed_encoder_request_t *req}
-%lex-param { decoder_state_t *s}
+%lex-param { parser_state_t *s}
 %parse-param { xed_encoder_request_t *req}
-%parse-param { decoder_state_t *s}
+%parse-param { parser_state_t *s}
 
 
 %{
@@ -30,7 +30,7 @@ void yyerror(xed_encoder_request_t *req, decoder_state_t *state, const char* str
 #include <stdlib.h>
 #include "xed-encode.h"
 
-//extern void yyerror(xed_encoder_request_t *req, decoder_state_t *state, const char* str);
+//extern void yyerror(xed_encoder_request_t *req, parser_state_t *state, const char* str);
 
 %}
 
