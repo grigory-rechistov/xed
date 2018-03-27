@@ -31,6 +31,8 @@ typedef struct {
     xed_uint_t memop; /* sequential number of memory operand */
 
     xed_uint_t deduced_operand_size; /* From register size: AX, EAX, RAX */
+    xed_int_t deduced_vector_length;
+
     bool repe_seen;
     bool repne_seen;
     bool lock_seen;
@@ -38,4 +40,9 @@ typedef struct {
 
 void decorate_opcode_mnemonic(char* opcode, xed_uint_t len, const parser_state_t *s);
 
+void deduce_operand_width_gpr(xed_encoder_request_t* req, parser_state_t *s,
+                              xed_reg_enum_t reg);
+
+void deduce_operand_width_vector(xed_encoder_request_t* req, parser_state_t *s,
+                                 xed_reg_enum_t reg);
 #endif // PARSE_HELPERS_H

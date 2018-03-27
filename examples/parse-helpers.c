@@ -38,12 +38,12 @@ void decorate_opcode_mnemonic(char* opcode, xed_uint_t len,
     char tmp[len];
     tmp[0] = '\0';
 
-//    xed_iclass_t original_iclass = str2xed_iclass_enum_t(opcode);
 
     if (has_front_prefix) {
         /* TODO iclasses contain all three forms: REP_, REPE_ and REPNE_.
            To properly form the new mnemonic, classification of
            original_iclass is needed to tell REP_ from REPE_ */
+        //    xed_iclass_t original_iclass = str2xed_iclass_enum_t(opcode);
         const char *forward_prefix = s->repe_seen? "REPE_":
                                      s->repne_seen ? "REPNE_": 0;
         xed_strncpy(tmp, forward_prefix, len);
@@ -54,7 +54,54 @@ void decorate_opcode_mnemonic(char* opcode, xed_uint_t len,
         const char *post_prefix = "_LOCK";
         xed_strncat(tmp, post_prefix, len);
     }
+    /* TODO do other Xed-specific transformations of mnemonic to iclass
+        E.g.: MOVSD -> MOVSD_XMM */
 
     xed_strncpy(opcode, tmp, len);
 }
 
+/* The same mnemonic may have operands of different width. Adjust operands
+    width when a GPR operand is known */
+void deduce_operand_width_gpr(xed_encoder_request_t* req, parser_state_t *s,
+                              xed_reg_enum_t reg)
+{
+    xed_reg_class_enum_t rc = xed_gpr_reg_class(reg);
+    switch (rc) {
+    case XED_REG_CLASS_GPR8:
+            xed_encoder_request_set_effective_operand_width(req, 8);
+            break;
+    case XED_REG_CLASS_GPR16:
+            xed_encoder_request_set_effective_operand_width(req, 16);
+            break;
+    case XED_REG_CLASS_GPR32:
+            xed_encoder_request_set_effective_operand_width(req, 32);
+            break;
+    case XED_REG_CLASS_GPR64:
+            xed_encoder_request_set_effective_operand_width(req, 64);
+            break;
+    default:
+        break;
+    }
+}
+
+void deduce_operand_width_vector(xed_encoder_request_t* req, parser_state_t *s,
+                                 xed_reg_enum_t reg)
+{
+    xed_reg_class_enum_t rc = xed_reg_class(reg);
+    switch (rc) {
+    case XED_REG_CLASS_XMM:
+            s->deduced_vector_length = 0;
+            xed3_operand_set_vl(req, 0);
+            break;
+    case XED_REG_CLASS_YMM:
+            s->deduced_vector_length = 1;
+            xed3_operand_set_vl(req, 1);
+            break;
+    case XED_REG_CLASS_ZMM:
+            s->deduced_vector_length = 2;
+            xed3_operand_set_vl(req, 2);
+            break;
+    default:
+        break;
+    }
+}

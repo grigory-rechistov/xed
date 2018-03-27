@@ -58,7 +58,8 @@ parse_encode_request(ascii_encode_request_t areq)
     parser_state_t s = (parser_state_t){
                                     .dstate = &areq.dstate,
                                     .operand_index = 0,
-                                    .regnum = 0
+                                    .regnum = 0,
+                                    .deduced_vector_length = -1,
                                     };
 
     char upcase_command[5000];
