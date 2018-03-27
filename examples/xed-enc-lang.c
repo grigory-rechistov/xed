@@ -30,7 +30,7 @@ END_LEGAL */
 #include "lexer.h"
 
 /* TODO implement better error reporting */
-void yyerror(xed_encoder_request_t *req, decoder_state_t *state, const char* string)
+void yyerror(xed_encoder_request_t *req, parser_state_t *state, const char* string)
 {
     fprintf(stderr, "[XED_CLIENT_ERROR] Scanner parsing error: %s\n", string);
     exit(1);
@@ -55,7 +55,7 @@ parse_encode_request(ascii_encode_request_t areq)
 
     xed_encoder_request_t req;
     xed_encoder_request_zero_set_mode(&req,&(areq.dstate));
-    decoder_state_t s = (decoder_state_t){
+    parser_state_t s = (parser_state_t){
                                     .dstate = &areq.dstate,
                                     .operand_index = 0,
                                     .regnum = 0

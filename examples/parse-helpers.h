@@ -34,8 +34,8 @@ typedef struct {
     bool repe_seen;
     bool repne_seen;
     bool lock_seen;
-} decoder_state_t; /* TODO better name */
+} parser_state_t;
 
-void decorate_opcode_mnemonic(char* opcode, xed_uint_t len, const decoder_state_t *s);
+void decorate_opcode_mnemonic(char* opcode, xed_uint_t len, const parser_state_t *s);
 
 #endif // PARSE_HELPERS_H

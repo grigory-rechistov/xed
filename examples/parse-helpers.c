@@ -18,14 +18,14 @@ END_LEGAL */
 
 // Helper functions to parse menmonic representation into Xed encode request
 
-/* Sometimes prefixes are encoded inside iclass. We've seen all prefixes
-           now and can act on them */
 
 #include "xed-util.h"
 #include "parse-helpers.h"
 
+/* Sometimes prefixes are encoded inside iclass. We've seen all prefixes
+   now and can act on them */
 void decorate_opcode_mnemonic(char* opcode, xed_uint_t len,
-                              const decoder_state_t *s)
+                              const parser_state_t *s)
 {
     /* make sure string length was passed correctly */
     xed_assert(len > sizeof(char*));
