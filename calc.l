@@ -10,6 +10,7 @@
 
 %{
 
+#include <stdbool.h>
 #include <stdio.h>
 
 #include "calc.tab.h"
@@ -18,8 +19,38 @@
 
 %}
 
+/* Definitions of some patterns */
 
+ /* Not exactly a GPR */
+PROG_CNTR (E|R)?IP
 
+ /* RAX-RBX and their classic subparts */
+GPR_1 (E|R)?[ABCD]X
+
+ /* RSI, RDI */
+GPR_2 (E|R)?[SD]I
+
+ /* RBP, RSP */
+GPR_3 (E|R)?[BS]P
+
+ /* R8-R15, TODO limit number range */
+GPR_4 R[0-9]+
+
+ /* R8L-R15D, TODO limit number range */
+GPR_5 R[0-9][LWD]+
+
+ /* AH-DL */
+GPR_6 [ABCD][HL]
+
+ /* Weird 8-bit subparts */
+GPR_7 SPL|BPL|SIL|DIL
+
+ALLGPR {PROG_CNTR}|{GPR_1}|{GPR_2}|{GPR_3}|{GPR_4}|{GPR_5}|{GPR_6}|{GPR_7}
+
+ /* Segment registers */
+SEG_REG [CDEFGS]S
+
+ALPHANUMWORD [A-Z][A-Z0-9]*
 
 %%
 
@@ -44,8 +75,7 @@ LOCK { printf("FIXME lock prefix not handled\n");
        s->lock_seen = true;
        return TOK_LOCK_PREF;}
 
- /* RAX-RBX and their classic subparts */
-(E|R)?[ABCD]X { xed_reg_enum_t reg = str2xed_reg_enum_t(yytext);
+{ALLGPR} { xed_reg_enum_t reg = str2xed_reg_enum_t(yytext);
                 if (reg == XED_REG_INVALID) {
                     fprintf(stderr,
                         "[XED CLIENT ERROR] Bad register name: %s\n", yytext);
@@ -54,15 +84,7 @@ LOCK { printf("FIXME lock prefix not handled\n");
                 yylval.regname = reg;
                 return TOK_GPR;}
 
-(E|R)?[SD]I {DUP_YYTEXT(); return TOK_GPR;} /* RSI, RDI */
-(E|R)?[BS]P {DUP_YYTEXT(); return TOK_GPR;} /* RBP, RSP */
-R[0-9]+ {DUP_YYTEXT(); return TOK_GPR;} /* R8-R15, TODO limit number range */
-R[0-9][LWD]+ {DUP_YYTEXT(); return TOK_GPR;} /* R8L-R15D, TODO limit number range */
-(E|R)?IP {DUP_YYTEXT(); return TOK_GPR;} /* Not exactly a GPR */
-[ABCD][HL] {DUP_YYTEXT(); return TOK_GPR;} /* AH-DL */
-SPL|BPL|SIL|DIL {DUP_YYTEXT(); return TOK_GPR;} /* Weird 8 bit parts */
-
-[CDEFGS]S {DUP_YYTEXT(); return TOK_SEG_REG;} /* Segment registers */
+{SEG_REG} {DUP_YYTEXT(); return TOK_SEG_REG;} /* Segment registers */
 
 ST[0-7] {DUP_YYTEXT(); return TOK_FPU_REG;} /* x87 FPU regs */
 (X|Y|Z)?MM[0-9]+ {DUP_YYTEXT(); return TOK_VEC_REG;} /* MMX, XMM, YMM, ZMM TODO limit number range */
@@ -89,7 +111,7 @@ BYTE|([DQ]?WORD) {DUP_YYTEXT(); return TOK_MEMWIDTH;} /* memory width specifier 
 
 
  /* This rule must be the last one as it matches all words */
-[A-Z][A-Z0-9]* {
+{ALPHANUMWORD} {
                 xed_iclass_enum_t iclass = XED_ICLASS_INVALID;
                 printf("lex opcode = '%s'\n", yytext);
                 iclass =  str2xed_iclass_enum_t(yytext);
@@ -97,10 +119,10 @@ BYTE|([DQ]?WORD) {DUP_YYTEXT(); return TOK_MEMWIDTH;} /* memory width specifier 
                     fprintf(stderr,
                     "[XED CLIENT ERROR] Bad instruction name: '%s'\n", yytext);
                     exit(1);
-            }
-            xed_encoder_request_set_iclass(req, iclass);
-            yylval.opcode = iclass;
-            return TOK_OPCODE;}
+                }
+                xed_encoder_request_set_iclass(req, iclass);
+                yylval.opcode = iclass;
+                return TOK_OPCODE;}
 
 
 \n        {return T_NEWLINE;}

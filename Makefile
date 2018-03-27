@@ -8,7 +8,7 @@ all: calc
 parser: lex.yy.c calc.tab.c
 
 lex.yy.c: calc.l calc.tab.h
-	$(FLEX) --header-file=lexer.h calc.l
+	$(FLEX) -d --header-file=lexer.h calc.l
 
 calc.tab.c calc.tab.h:	calc.y
 	$(BISON) -t -d calc.y
