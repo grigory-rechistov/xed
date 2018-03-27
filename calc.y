@@ -149,11 +149,14 @@ register: TOK_GPR {
         if (s->dstate->mmode != XED_MACHINE_MODE_LONG_64)
             if (reg_name == XED_REG_DIL || reg_name == XED_REG_SPL
             ||  reg_name == XED_REG_BPL || reg_name == XED_REG_SIL)
-            {
-                fprintf(stderr,
-                    "[XED CLIENT ERROR] Cannot use DIL/SPL/BPL/SIL outside of 64b mode\n");
-                exit(1);
-            }
+        {
+            fprintf(stderr,
+                "[XED CLIENT ERROR] Cannot use DIL/SPL/BPL/SIL outside of 64b mode\n");
+            exit(1);
+        }
+        
+
+
         // The registers operands are numbered starting from the first one
         // as XED_OPERAND_REG0. We increment regnum (below) every time we
         // add a register operand.
@@ -166,6 +169,8 @@ register: TOK_GPR {
         
         // store the operand storage field name in the encode-order array
         xed_encoder_request_set_operand_order(req, s->operand_index, reg_pos);
+        
+        deduce_operand_width_gpr(req, s, reg_name);
 
         // find_vl(reg, &vl); FIXME reenable me
         

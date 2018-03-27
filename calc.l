@@ -59,7 +59,6 @@ ALPHANUMWORD [A-Z][A-Z0-9_]*
 %%
 
 [ \t]   ; // ignore all whitespace and tabs
-"PTR"   ; // ignore "ptr" part in memory specifiers. Not exactly correct
 "," {return TOK_COMMA;}
 "[" {return TOK_LSQBR;}
 "]" {return TOK_RSQBR;}
@@ -114,6 +113,7 @@ K[0-7] {DUP_YYTEXT(); return TOK_MASK_REG;} /* opmask registers */
 
 [+-]?0X[0-9A-F]+ {DUP_YYTEXT(); return TOK_CONSTANT;} /* hexadecimal signed number */
 [+-]?[0-9]+ {DUP_YYTEXT(); return TOK_CONSTANT;} /* decimal signed number */
+
 
 BYTE|([DQ]?WORD) {DUP_YYTEXT(); return TOK_MEMWIDTH;} /* memory width specifier */
 ([XYZ]MMWORD) {DUP_YYTEXT(); return TOK_MEMWIDTH;} /* memory width specifier for vector commands */
