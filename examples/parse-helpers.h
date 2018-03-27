@@ -30,8 +30,9 @@ typedef struct {
     xed_uint_t regnum; /* sequential number of register operand */
     xed_uint_t memop; /* sequential number of memory operand */
 
-    xed_uint_t deduced_operand_size; /* From register size: AX, EAX, RAX */
-    xed_int_t deduced_vector_length;
+    xed_uint_t deduced_operand_size; /* From register size: AX, EAX, RAX etc. */
+    xed_int_t deduced_vector_length; /* (XYZ)MM, -1 for absent */
+    xed_uint_t memory_operand_bytes; /* From BYTE PTR, WORD PTR etc. */
 
     bool repe_seen;
     bool repne_seen;
