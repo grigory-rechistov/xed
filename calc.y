@@ -3,23 +3,12 @@
 %code requires {
 #include <stdbool.h>
 #include "xed-encode.h"
-
+#include "parse-helpers.h"
 
 // remove when done debugging
 #undef YYDEBUG
 #define YYDEBUG 1
 
-typedef struct {
-    xed_state_t* dstate;
-    xed_uint_t operand_index; /* sequential number of all operands */
-    xed_uint_t regnum; /* sequential number of register operand */
-    xed_uint_t memop; /* sequential number of memory operand */
-    
-    xed_uint_t deduced_operand_size; /* From register size: AX, EAX, RAX */
-    bool repe_seen;
-    bool repne_seen;
-    bool lock_seen;
-} decoder_state_t; /* TODO better name */
 
 #define YY_DECL int yylex(xed_encoder_request_t *req, decoder_state_t *s)
 
@@ -46,7 +35,7 @@ void yyerror(xed_encoder_request_t *req, decoder_state_t *state, const char* str
 %}
 
 %union {
-    xed_iclass_enum_t opcode;
+//    xed_iclass_enum_t opcode;
     xed_reg_enum_t regname;
     xed_uint64_t constant;
     bool lock_seen;
@@ -56,10 +45,11 @@ void yyerror(xed_encoder_request_t *req, decoder_state_t *state, const char* str
     char memwidth;
     char broadcastspec;
     char roundingspec;
+    char opcode_string[100];
     char garbage[100];
 }
 
-%token<opcode> TOK_OPCODE
+%token<opcode_string> TOK_OPCODE
 %token<regname> TOK_GPR
 
 %token TOK_REPE_PREF
@@ -118,8 +108,22 @@ prefixes: /* empty */
 ;
 
 opcode: TOK_OPCODE {
-        /* Sometimes prefixes are encoded in iclass */
-        printf("TODO mogrify opcode \n");
+        xed_iclass_enum_t iclass = XED_ICLASS_INVALID;
+        /* Sometimes prefixes are encoded inside iclass. We've seen all prefixes
+           now and can act on them */
+        decorate_opcode_mnemonic($1, sizeof($1), s);
+        iclass =  str2xed_iclass_enum_t($1);
+        if (iclass == XED_ICLASS_INVALID) {
+            if (s->repne_seen || s->repe_seen || s->lock_seen)
+                fprintf(stderr,
+                "[XED CLIENT ERROR] Bad instruction name or incompatible"
+                " prefixes: '%s'\n", $1);
+            else
+                fprintf(stderr,
+                "[XED CLIENT ERROR] Bad instruction name: '%s'\n", $1);
+            exit(1);
+        }
+        xed_encoder_request_set_iclass(req, iclass);
 }
 ;
 

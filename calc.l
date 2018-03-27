@@ -13,8 +13,10 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include "parse-helpers.h"
 #include "calc.tab.h"
 
+/* Action for not-yet written rules */
 #define DUP_YYTEXT() do {xed_strncpy(yylval.garbage, yytext, 100);} while(0)
 
 %}
@@ -119,16 +121,9 @@ BYTE|([DQ]?WORD) {DUP_YYTEXT(); return TOK_MEMWIDTH;} /* memory width specifier 
 
  /* This rule must be the last one as it matches all words */
 {ALPHANUMWORD} {
-                xed_iclass_enum_t iclass = XED_ICLASS_INVALID;
                 printf("lex opcode = '%s'\n", yytext);
-                iclass =  str2xed_iclass_enum_t(yytext);
-                if (iclass == XED_ICLASS_INVALID) {
-                    fprintf(stderr,
-                    "[XED CLIENT ERROR] Bad instruction name: '%s'\n", yytext);
-                    exit(1);
-                }
-                xed_encoder_request_set_iclass(req, iclass);
-                yylval.opcode = iclass;
+                xed_strncpy(yylval.opcode_string, yytext,
+                            sizeof(yylval.opcode_string));
                 return TOK_OPCODE;}
 
 
