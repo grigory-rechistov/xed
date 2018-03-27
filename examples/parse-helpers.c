@@ -18,6 +18,8 @@ END_LEGAL */
 
 // Helper functions to parse mnemonic representation into Xed encode request
 
+#include <stdlib.h>
+#include <stdio.h>
 
 #include "xed-util.h"
 #include "parse-helpers.h"
@@ -105,3 +107,15 @@ void deduce_operand_width_vector(xed_encoder_request_t* req, parser_state_t *s,
         break;
     }
 }
+
+xed_reg_enum_t parse_single_register(const char* txt)
+{
+    xed_reg_enum_t reg = str2xed_reg_enum_t(txt);
+    if (reg == XED_REG_INVALID) {
+        fprintf(stderr,
+             "[XED CLIENT ERROR] Bad register name: %s\n", txt);
+        exit(1);
+    }
+    return reg;
+}
+
