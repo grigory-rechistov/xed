@@ -50,7 +50,9 @@ ALLGPR {PROG_CNTR}|{GPR_1}|{GPR_2}|{GPR_3}|{GPR_4}|{GPR_5}|{GPR_6}|{GPR_7}
  /* Segment registers */
 SEG_REG [CDEFGS]S
 
-ALPHANUMWORD [A-Z][A-Z0-9]*
+ /* Alpha-numeric sequences. Note that it also accepts underscore, even though
+    Intel manuals do not have instructions with underscores in menmonics */
+ALPHANUMWORD [A-Z][A-Z0-9_]*
 
 %%
 
