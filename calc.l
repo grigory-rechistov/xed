@@ -125,9 +125,36 @@ K[0-7] {DUP_YYTEXT(); return TOK_MASK_REG;} /* opmask registers */
 [+-]?0X[0-9A-F]+ {DUP_YYTEXT(); return TOK_CONSTANT;} /* hexadecimal signed number */
 [+-]?[0-9]+ {DUP_YYTEXT(); return TOK_CONSTANT;} /* decimal signed number */
 
+ /* Memory width specifiers */
+"BYTE PTR" {
+    s->memory_operand_bytes = 1;
+    return TOK_MEMWIDTH;
+}
 
-BYTE|([DQ]?WORD) {DUP_YYTEXT(); return TOK_MEMWIDTH;} /* memory width specifier */
-([XYZ]MMWORD) {DUP_YYTEXT(); return TOK_MEMWIDTH;} /* memory width specifier for vector commands */
+"WORD PTR" {
+    s->memory_operand_bytes = 2;
+    return TOK_MEMWIDTH;
+}
+
+"DWORD PTR" {
+    s->memory_operand_bytes = 4;
+    return TOK_MEMWIDTH;
+}
+
+"QWORD PTR" {
+    s->memory_operand_bytes = 8;
+    return TOK_MEMWIDTH;
+}
+
+ /* Memory width specifier for vector operands  */
+[XYZ]"MMWORD PTR" {
+    s->memory_operand_bytes = yytext[0] == 'X'? 16:
+                              yytext[0] == 'Y'? 32:
+                              yytext[0] == 'Z'? 64: -1;
+    printf("FIXME ?mmword ptr case not done\n");
+    //xed3_operand_set_vl(req,(xed_uint_t)(yytext[0] - 'X'));
+    return TOK_MEMWIDTH;
+}
 
 
  /* This rule must be the last one as it matches all words */
@@ -136,7 +163,6 @@ BYTE|([DQ]?WORD) {DUP_YYTEXT(); return TOK_MEMWIDTH;} /* memory width specifier 
                 xed_strncpy(yylval.opcode_string, yytext,
                             sizeof(yylval.opcode_string));
                 return TOK_OPCODE;}
-
 
 \n        {return T_NEWLINE;}
 
