@@ -65,24 +65,29 @@ ALPHANUMWORD [A-Z][A-Z0-9]*
 
 
 REP|REPE|REPZ { xed_encoder_request_set_rep(req);
+                 /* NOTE does not affect string instructions as presence of
+                    prefixes is encoded in their iclass */
                 s->repe_seen = true;
                 return TOK_REPE_PREF;}
 REPNE|REPNZ { xed_encoder_request_set_repne(req);
+              /* NOTE does not affect string instructions as presence of
+                 prefixes is encoded in their iclass */
               s->repne_seen = true;
               return TOK_REPNE_PREF;}
 
 LOCK { printf("FIXME lock prefix not handled\n");
+       /* To be encoded in iclass */
        s->lock_seen = true;
        return TOK_LOCK_PREF;}
 
 {ALLGPR} { xed_reg_enum_t reg = str2xed_reg_enum_t(yytext);
-                if (reg == XED_REG_INVALID) {
-                    fprintf(stderr,
+           if (reg == XED_REG_INVALID) {
+                fprintf(stderr,
                         "[XED CLIENT ERROR] Bad register name: %s\n", yytext);
-                    exit(1);
-                }
-                yylval.regname = reg;
-                return TOK_GPR;}
+                exit(1);
+            }
+            yylval.regname = reg;
+            return TOK_GPR;}
 
 {SEG_REG} {DUP_YYTEXT(); return TOK_SEG_REG;} /* Segment registers */
 

@@ -107,7 +107,20 @@ line: T_NEWLINE
 ;
 
 /* TODO add handling of single byte prefixes */
-asmline: TOK_OPCODE operands { printf("opcode operands\n");}
+asmline: prefixes opcode operands
+;
+
+prefixes: /* empty */
+         | TOK_REPE_PREF
+         | TOK_REPNE_PREF
+         | TOK_LOCK_PREF
+         /* TODO support multiple single-byte prefixes? */
+;
+
+opcode: TOK_OPCODE {
+        /* Sometimes prefixes are encoded in iclass */
+        printf("TODO mogrify opcode \n");
+}
 ;
 
 operands: /* no operands */
