@@ -16,7 +16,7 @@ Copyright (c) 2018 Intel Corporation
 
 END_LEGAL */
 
-// Helper functions to parse menmonic representation into Xed encode request
+// Helper functions to parse mnemonic representation into Xed encode request
 
 
 #include "xed-util.h"
@@ -27,8 +27,34 @@ END_LEGAL */
 void decorate_opcode_mnemonic(char* opcode, xed_uint_t len,
                               const parser_state_t *s)
 {
+    bool has_front_prefix = s->repe_seen || s->repne_seen;
+    bool has_post_prefix = s->lock_seen;
+
+    if (!has_front_prefix && !has_post_prefix)
+        return;
+
     /* make sure string length was passed correctly */
     xed_assert(len > sizeof(char*));
-    return;
+    char tmp[len];
+    tmp[0] = '\0';
+
+//    xed_iclass_t original_iclass = str2xed_iclass_enum_t(opcode);
+
+    if (has_front_prefix) {
+        /* TODO iclasses contain all three forms: REP_, REPE_ and REPNE_.
+           To properly form the new mnemonic, classification of
+           original_iclass is needed to tell REP_ from REPE_ */
+        const char *forward_prefix = s->repe_seen? "REPE_":
+                                     s->repne_seen ? "REPNE_": 0;
+        xed_strncpy(tmp, forward_prefix, len);
+    }
+    xed_strncat(tmp, opcode, len);
+
+    if (has_post_prefix) {
+        const char *post_prefix = "_LOCK";
+        xed_strncat(tmp, post_prefix, len);
+    }
+
+    xed_strncpy(opcode, tmp, len);
 }
 
