@@ -78,6 +78,16 @@ REPNE|REPNZ { xed_encoder_request_set_repne(req);
               s->repne_seen = true;
               return TOK_REPNE_PREF;}
 
+XACQUIRE { xed_encoder_request_set_repne(req);
+              /* NOTE currently not fully supported by xed_encode() */
+           s->repne_seen = true;
+           return TOK_REPNE_PREF;}
+
+XRELEASE { xed_encoder_request_set_rep(req);
+           /* NOTE currently not fully supported by xed_encode() */
+           s->repe_seen = true;
+           return TOK_REPE_PREF;}
+
 LOCK { /* To be encoded into iclass */
        s->lock_seen = true;
        return TOK_LOCK_PREF;}

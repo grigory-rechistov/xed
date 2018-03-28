@@ -217,16 +217,43 @@ segment_override: TOK_SEG_REG TOK_COLON {
 //  disp8*N.
 //  vpcompressd [rdi] {k1}, zmm1 - memory and masking from here: https://blogs.msdn.microsoft.com/vcblog/2017/07/11/microsoft-visual-studio-2017-supports-intel-avx-512/
 
+
+/* TODO add support and tests for:
+unspecified memory width "mem ptr" without word/dword etc.: xsave, sgdt etc.
+bnd registers, mib memory operands
+debug registers
+control registers
+long pointers
+mm, xmm instructions: movq2dq
+mixed operand width: movsx
+string operations with segment overrides
+shifts with constant/CL
+bound operands
+*/
+
 // V4FMADDPS zmm1{k1}{z}, zmm2+3, m128 - a pair of zmm registers
 
 
-mem_expr: TOK_GPR /* single GPR */
+mem_expr: indirect_addr_gpr
         | TOK_GPR TOK_PLUS TOK_GPR /* GPR + GPR (16-bit specific) */
         | TOK_GPR TOK_PLUS TOK_CONSTANT /* GPR + offset */
         | TOK_GPR TOK_PLUS TOK_GPR TOK_MULTI TOK_CONSTANT /* Base + Index GPR * Scale */
         | TOK_GPR TOK_PLUS TOK_GPR TOK_MULTI TOK_CONSTANT TOK_PLUS TOK_CONSTANT /* Base + Index GPR * Scale + constant */
         | vsib_mem_expr
 ;
+
+/* single GPR */
+indirect_addr_gpr: TOK_GPR {
+      xed_reg_class_enum_t rc = xed_gpr_reg_class($1);
+      if ($1 == XED_REG_EIP)
+          xed_encoder_request_set_effective_address_size(req, 32);
+      else if (rc == XED_REG_CLASS_GPR32)
+          xed_encoder_request_set_effective_address_size(req, 32);
+      else if (rc == XED_REG_CLASS_GPR16 )
+          xed_encoder_request_set_effective_address_size(req, 16);
+      STOPPED HERE: copy more memory operand positioning code from xed-enc-lang
+      xed_encoder_request_set_base0(req, $1);
+};
 
 vsib_mem_expr:
         | TOK_GPR TOK_PLUS TOK_VEC_REG TOK_MULTI TOK_CONSTANT /* Base + Index Vector * Scale */
