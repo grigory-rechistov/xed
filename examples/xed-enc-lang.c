@@ -59,7 +59,16 @@ parse_encode_request(ascii_encode_request_t areq)
                                     .dstate = &areq.dstate,
                                     .operand_index = 0,
                                     .regnum = 0,
+                                    .memop = 0,
                                     .deduced_vector_length = -1,
+                                    .memory_operand_bytes = 0,
+                                    .disp_valid = false,
+                                    .segment_reg = XED_REG_INVALID,
+                                    .base_reg = XED_REG_INVALID,
+                                    .index_reg = XED_REG_INVALID,
+                                    .scale_val = 1,
+                                    .disp_val = 0,
+                                    .disp_width_bits = 0,
                                     };
 
     char upcase_command[5000];

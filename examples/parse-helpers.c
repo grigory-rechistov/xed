@@ -71,15 +71,19 @@ void deduce_operand_width_gpr(xed_encoder_request_t* req, parser_state_t *s,
     switch (rc) {
     case XED_REG_CLASS_GPR8:
             xed_encoder_request_set_effective_operand_width(req, 8);
+            s->deduced_operand_size = 8;
             break;
     case XED_REG_CLASS_GPR16:
             xed_encoder_request_set_effective_operand_width(req, 16);
+            s->deduced_operand_size = 16;
             break;
     case XED_REG_CLASS_GPR32:
             xed_encoder_request_set_effective_operand_width(req, 32);
+            s->deduced_operand_size = 32;
             break;
     case XED_REG_CLASS_GPR64:
             xed_encoder_request_set_effective_operand_width(req, 64);
+            s->deduced_operand_size = 64;
             break;
     default:
         break;
@@ -119,3 +123,104 @@ xed_reg_enum_t parse_single_register(const char* txt)
     return reg;
 }
 
+void fill_register_operand(xed_encoder_request_t* req, parser_state_t *s, xed_reg_enum_t reg_name)
+{
+    if (s->dstate->mmode != XED_MACHINE_MODE_LONG_64)
+        if (reg_name == XED_REG_DIL || reg_name == XED_REG_SPL
+        ||  reg_name == XED_REG_BPL || reg_name == XED_REG_SIL)
+    {
+        fprintf(stderr,
+            "[XED CLIENT ERROR] Cannot use DIL/SPL/BPL/SIL outside of 64b mode\n");
+        exit(1);
+    }
+    if (s->regnum > 8) {
+        fprintf(stderr,
+              "[XED CLIENT ERROR] Only up to nine register operands allowed\n");
+        exit(1);
+    }
+    // The registers operands are numbered starting from the first one
+    // as XED_OPERAND_REG0. We increment regnum (below) every time we
+    // add a register operand.
+    xed_operand_enum_t reg_pos = XED_CAST(xed_operand_enum_t,
+                                          XED_OPERAND_REG0 + s->regnum);
+
+    /* TODO check for overflow for number of register operands */
+    // store the register identifier in the operand storage field
+    xed_encoder_request_set_reg(req, reg_pos, reg_name);
+
+    // store the operand storage field name in the encode-order array
+    xed_encoder_request_set_operand_order(req, s->operand_index, reg_pos);
+
+    deduce_operand_width_gpr(req, s, reg_name);
+
+    // find_vl(reg, &vl); FIXME reenable me
+
+    s->operand_index++;
+    s->regnum++;
+}
+
+
+void fill_memory_operand(xed_encoder_request_t* req, parser_state_t *s)
+{
+    // FIXME: add MEM(immed) for the OC1_A and OC1_O types????
+    xed_reg_class_enum_t rc = XED_REG_CLASS_INVALID;
+    xed_reg_class_enum_t rci = XED_REG_CLASS_INVALID;
+
+    if (s->memop == 0) {
+         // Tell XED that we have a memory operand
+         xed_encoder_request_set_mem0(req);
+         // Tell XED that the mem0 operand is the next operand:
+         xed_encoder_request_set_operand_order(
+             req, s->operand_index, XED_OPERAND_MEM0);
+    } else if (s->memop == 1) {
+        xed_encoder_request_set_mem1(req);
+        // Tell XED that the mem1 operand is the next operand:
+        xed_encoder_request_set_operand_order(
+                req, s->operand_index, XED_OPERAND_MEM1);
+    } else {
+         fprintf(stderr,
+             "[XED CLIENT ERROR] Only up to two memory operands allowed\n");
+         exit(1);
+    }
+
+//    else if (mem_bis.agen) {
+//        // Tell XED we have an AGEN
+//        xed_encoder_request_set_agen(&req);
+//        // The AGEN is the next operand
+//        xed_encoder_request_set_operand_order(
+//            &req,operand_index, XED_OPERAND_AGEN);
+//    }
+
+
+    rc = xed_gpr_reg_class(s->base_reg);
+    rci = xed_gpr_reg_class(s->index_reg);
+
+    if (s->base_reg == XED_REG_EIP)
+        xed_encoder_request_set_effective_address_size(req, 32);
+    else if (rc == XED_REG_CLASS_GPR32 || rci == XED_REG_CLASS_GPR32)
+        xed_encoder_request_set_effective_address_size(req, 32);
+    else if (rc == XED_REG_CLASS_GPR16 || rci == XED_REG_CLASS_GPR16)
+        xed_encoder_request_set_effective_address_size(req, 16);
+
+    // fill in the memory fields collected by parser
+    xed_encoder_request_set_base0(req, s->base_reg);
+    xed_encoder_request_set_index(req, s->index_reg);
+    xed_encoder_request_set_scale(req, s->scale_val);
+    xed_encoder_request_set_seg0(req,  s->segment_reg);
+
+    // TODO reenable later
+//    find_vl(s->index_reg, &vl); // for scatter/gather
+
+    if (s->memory_operand_bytes)
+        xed_encoder_request_set_memory_operand_length(
+            req,
+            s->memory_operand_bytes); // BYTES
+    if (s->disp_valid)
+        xed_encoder_request_set_memory_displacement(
+            req,
+            s->disp_val,
+            s->disp_width_bits/8);
+
+    s->memop++;
+    s->operand_index++;
+}

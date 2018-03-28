@@ -27,6 +27,7 @@ END_LEGAL */
 typedef struct {
     xed_state_t* dstate;
     xed_uint_t operand_index; /* sequential number of all operands */
+    /* TODO give better names to members */
     xed_uint_t regnum; /* sequential number of register operand */
     xed_uint_t memop; /* sequential number of memory operand */
 
@@ -34,6 +35,17 @@ typedef struct {
     xed_int_t deduced_vector_length; /* (XYZ)MM, -1 for absent */
     xed_uint_t memory_operand_bytes; /* From BYTE PTR, WORD PTR etc. */
 
+    /* Memory operands */
+    xed_bool_t disp_valid;
+    xed_reg_enum_t segment_reg;
+    xed_reg_enum_t base_reg;
+    xed_reg_enum_t index_reg;
+    xed_uint8_t scale_val;
+
+    xed_int64_t disp_val;
+    unsigned int disp_width_bits;
+
+    /* Prefixes */
     bool repe_seen;
     bool repne_seen;
     bool lock_seen;
@@ -49,5 +61,7 @@ void deduce_operand_width_vector(xed_encoder_request_t* req, parser_state_t *s,
 
 xed_reg_enum_t parse_single_register(const char* txt);
 
+void fill_memory_operand(xed_encoder_request_t* req, parser_state_t *s);
+void fill_register_operand(xed_encoder_request_t* req, parser_state_t *s, xed_reg_enum_t reg_name);
 
 #endif // PARSE_HELPERS_H
