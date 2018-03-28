@@ -145,40 +145,8 @@ operand:  register
 ;
 
 register: TOK_GPR {
-        xed_reg_enum_t reg_name = $1;
-
-        if (s->dstate->mmode != XED_MACHINE_MODE_LONG_64)
-            if (reg_name == XED_REG_DIL || reg_name == XED_REG_SPL
-            ||  reg_name == XED_REG_BPL || reg_name == XED_REG_SIL)
-        {
-            fprintf(stderr,
-                "[XED CLIENT ERROR] Cannot use DIL/SPL/BPL/SIL outside of 64b mode\n");
-            exit(1);
-        }
-        
-
-
-        // The registers operands are numbered starting from the first one
-        // as XED_OPERAND_REG0. We increment regnum (below) every time we
-        // add a register operand.
-        xed_operand_enum_t reg_pos = XED_CAST(xed_operand_enum_t,
-                                                XED_OPERAND_REG0 + s->regnum);
-        
-        /* TODO check for overflow for number of register operands */
-        // store the register identifier in the operand storage field
-        xed_encoder_request_set_reg(req, reg_pos, reg_name);
-        
-        // store the operand storage field name in the encode-order array
-        xed_encoder_request_set_operand_order(req, s->operand_index, reg_pos);
-        
-        deduce_operand_width_gpr(req, s, reg_name);
-
-        // find_vl(reg, &vl); FIXME reenable me
-        
-        s->operand_index++;
-        s->regnum++;
-}
-;
+        fill_register_operand(req, s, $1);
+};
 
 vector_register: TOK_VEC_REG {
         xed_reg_enum_t reg_name = $1;
@@ -190,16 +158,32 @@ vector_register: TOK_VEC_REG {
 immediate: TOK_CONSTANT // all types of literals
 ;
 
-lea_spec: TOK_LSQBR mem_expr TOK_RSQBR { printf("lea_spec\n"); } /* LEA do not use "mem ptr" */
+lea_spec: TOK_LSQBR mem_expr TOK_RSQBR {  /* LEA does not use "mem ptr" */
+    printf("TODO lea_spec\n"); 
+    
+    // Tell XED we have an AGEN
+    xed_encoder_request_set_agen(req);
+    // The AGEN is the next operand
+    xed_encoder_request_set_operand_order(
+        req, s->operand_index, XED_OPERAND_AGEN);
+    s->operand_index++;
+};
+
+mem_spec:  segment_override_mem_spec
+         | default_segment_mem_spec
 ;
 
-mem_spec:
-      TOK_MEMWIDTH segment_override TOK_LSQBR mem_expr TOK_RSQBR /* segment override */
-    | TOK_MEMWIDTH TOK_LSQBR mem_expr TOK_RSQBR /* default segment */
-;
+segment_override_mem_spec: TOK_MEMWIDTH segment_override TOK_LSQBR mem_expr TOK_RSQBR {
+          fill_memory_operand(req, s);
+};
+      
+default_segment_mem_spec: TOK_MEMWIDTH TOK_LSQBR mem_expr TOK_RSQBR {
+        fill_memory_operand(req, s);
+};
 
 segment_override: TOK_SEG_REG TOK_COLON {
-    xed_encoder_request_set_seg0(req, $1);
+//    xed_encoder_request_set_seg0(req, $1);
+    s->segment_reg = $1;
     // TODO s->segno ++;
 };
 
@@ -242,17 +226,9 @@ mem_expr: indirect_addr_gpr
         | vsib_mem_expr
 ;
 
-/* single GPR */
+/* single indirect GPR */
 indirect_addr_gpr: TOK_GPR {
-      xed_reg_class_enum_t rc = xed_gpr_reg_class($1);
-      if ($1 == XED_REG_EIP)
-          xed_encoder_request_set_effective_address_size(req, 32);
-      else if (rc == XED_REG_CLASS_GPR32)
-          xed_encoder_request_set_effective_address_size(req, 32);
-      else if (rc == XED_REG_CLASS_GPR16 )
-          xed_encoder_request_set_effective_address_size(req, 16);
-      STOPPED HERE: copy more memory operand positioning code from xed-enc-lang
-      xed_encoder_request_set_base0(req, $1);
+     s->base_reg = $1;
 };
 
 vsib_mem_expr:
