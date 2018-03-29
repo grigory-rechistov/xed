@@ -215,11 +215,12 @@ void fill_memory_operand(xed_encoder_request_t* req, parser_state_t *s)
         xed_encoder_request_set_memory_operand_length(
             req,
             s->memory_operand_bytes); // BYTES
-    if (s->disp_valid)
-        xed_encoder_request_set_memory_displacement(
-            req,
-            s->disp_val,
-            s->disp_width_bits/8);
+    if (s->disp_valid) {
+        /* TODO bring to one of accepted widths - 8, 16 (16-bit only), 32 */
+        unsigned int accepted_width = s->disp_width_bits/8;
+        xed_encoder_request_set_memory_displacement(req, s->disp_val,
+                                                    accepted_width);
+    }
 
     s->memop++;
     s->operand_index++;
