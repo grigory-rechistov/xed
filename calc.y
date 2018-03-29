@@ -35,12 +35,11 @@ void yyerror(xed_encoder_request_t *req, parser_state_t *state, const char* str)
 %}
 
 %union {
-//    xed_iclass_enum_t opcode;
     xed_reg_enum_t regname;
-    xed_uint64_t constant;
-    bool lock_seen;
-    bool repe_seen;
-    bool repne_seen;
+    struct {
+        xed_uint64_t value;
+        unsigned int width_bits;
+    } literal;
 
     char memwidth;
     char broadcastspec;
@@ -62,7 +61,7 @@ void yyerror(xed_encoder_request_t *req, parser_state_t *state, const char* str)
 %token<regname> TOK_FPU_REG
 %token<regname> TOK_MMX_REG
 
-%token TOK_CONSTANT
+%token<literal> TOK_CONSTANT
 %token TOK_MEMWIDTH
 
 
@@ -71,6 +70,7 @@ void yyerror(xed_encoder_request_t *req, parser_state_t *state, const char* str)
 %token TOK_LSQBR
 %token TOK_RSQBR
 %token TOK_PLUS
+%token TOK_MINUS
 %token TOK_MULTI
 %token TOK_COLON
 %token TOK_LCUBR
@@ -182,7 +182,6 @@ default_segment_mem_spec: TOK_MEMWIDTH TOK_LSQBR mem_expr TOK_RSQBR {
 };
 
 segment_override: TOK_SEG_REG TOK_COLON {
-//    xed_encoder_request_set_seg0(req, $1);
     s->segment_reg = $1;
     // TODO s->segno ++;
 };
@@ -219,8 +218,8 @@ bound operands
 
 
 mem_expr: indirect_addr_gpr
+        | indirect_addr_gpr_plus_offset
         | TOK_GPR TOK_PLUS TOK_GPR /* GPR + GPR (16-bit specific) */
-        | TOK_GPR TOK_PLUS TOK_CONSTANT /* GPR + offset */
         | TOK_GPR TOK_PLUS TOK_GPR TOK_MULTI TOK_CONSTANT /* Base + Index GPR * Scale */
         | TOK_GPR TOK_PLUS TOK_GPR TOK_MULTI TOK_CONSTANT TOK_PLUS TOK_CONSTANT /* Base + Index GPR * Scale + constant */
         | vsib_mem_expr
@@ -230,6 +229,21 @@ mem_expr: indirect_addr_gpr
 indirect_addr_gpr: TOK_GPR {
      s->base_reg = $1;
 };
+
+/* GPR +/- const offset */
+indirect_addr_gpr_plus_offset: TOK_GPR TOK_PLUS TOK_CONSTANT {
+     s->base_reg = $1;
+     s->disp_valid = 1;
+     s->disp_val = $3.value;
+     s->disp_width_bits = $3.width_bits;
+}
+                            | TOK_GPR TOK_MINUS TOK_CONSTANT {
+     s->base_reg = $1;
+     s->disp_valid = 1;
+     s->disp_val = XED_CAST(xed_uint64_t, -$3.value); /* Use negative constant */
+     s->disp_width_bits = $3.width_bits;
+
+}; 
 
 vsib_mem_expr:
         | TOK_GPR TOK_PLUS TOK_VEC_REG TOK_MULTI TOK_CONSTANT /* Base + Index Vector * Scale */

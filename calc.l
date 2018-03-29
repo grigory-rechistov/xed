@@ -13,6 +13,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include "xed-examples-util.h"
 #include "parse-helpers.h"
 #include "calc.tab.h"
 
@@ -63,6 +64,7 @@ ALPHANUMWORD [A-Z][A-Z0-9_]*
 "[" {return TOK_LSQBR;}
 "]" {return TOK_RSQBR;}
 "+" {return TOK_PLUS;}
+"-" {return TOK_MINUS;}
 "*" {return TOK_MULTI;}
 ":" {return TOK_COLON;}
 
@@ -132,8 +134,22 @@ K[0-7] {DUP_YYTEXT(); return TOK_MASK_REG;} /* opmask registers */
 "}" {return TOK_RCUBR;}
 
 
-[+-]?0X[0-9A-F]+ {DUP_YYTEXT(); return TOK_CONSTANT;} /* hexadecimal signed number */
-[+-]?[0-9]+ {DUP_YYTEXT(); return TOK_CONSTANT;} /* decimal signed number */
+ /* hexadecimal signed number */
+0X[0-9A-F]+ {
+        const char* digits = yytext+2; /* skip "0x"*/
+        yylval.literal.value = xed_strtoll(digits, 16);
+        yylval.literal.width_bits = XED_CAST(unsigned int,strlen(digits)*4);
+        return TOK_CONSTANT;
+}
+
+
+ /* decimal signed number */
+[0-9]+ {
+        const char* digits = yytext;
+        yylval.literal.value = xed_strtoll(digits, 10);
+        yylval.literal.width_bits = XED_CAST(unsigned int,strlen(digits)*4); // XXX blatantly wrong for decimals!
+        return TOK_CONSTANT;
+}
 
  /* Memory width specifiers */
 "BYTE PTR" {
