@@ -36,12 +36,12 @@ typedef struct {
     xed_uint_t memory_operand_bytes; /* From BYTE PTR, WORD PTR etc. */
 
     /* Memory operands */
-    xed_bool_t disp_valid;
     xed_reg_enum_t segment_reg;
     xed_reg_enum_t base_reg;
     xed_reg_enum_t index_reg;
     xed_uint8_t scale_val;
 
+    xed_bool_t disp_valid;
     xed_int64_t disp_val;
     unsigned int disp_width_bits;
 
