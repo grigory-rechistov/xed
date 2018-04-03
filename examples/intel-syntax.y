@@ -130,6 +130,7 @@ operand:  general_purpose_register
         | bound_register
         | opmask_register
         | literal_const
+        | negative_literal
         | far_pointer
         | lea_spec
         | mem_spec
@@ -169,6 +170,10 @@ opmask_register: TOK_OPMASK_REG {
 
 literal_const: TOK_CONSTANT {
         fill_immediate_operand(req, s, $1.value, $1.width_bits);
+};
+
+negative_literal: TOK_MINUS TOK_CONSTANT {
+        fill_immediate_operand(req, s, -$2.value, $2.width_bits);
 };
 
 far_pointer: TOK_CONSTANT TOK_COLON TOK_CONSTANT {
