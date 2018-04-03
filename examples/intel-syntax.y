@@ -209,7 +209,6 @@ segment_override: TOK_SEG_REG TOK_COLON {
 // vgatherdpd zmm30{k1},qword [r14+ymm31*8+0x7b]
 
 /* TODO support these notations: */
-// enterq $0x1412,$0x5
 // VADDPD zmm0 {k1},zmm1,zmm3,{rz-sae}
 // vaddps zmm7 {k6}, zmm2, zmm4, {rd-sae}
 //  disp8*N.
