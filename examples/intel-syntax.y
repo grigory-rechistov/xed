@@ -166,8 +166,9 @@ opmask_register: TOK_OPMASK_REG {
         fill_register_operand(req, s, $1);
 };
 
-immediate: TOK_CONSTANT // all types of literals
-;
+immediate: TOK_CONSTANT {
+        fill_immediate_operand(req, s, $1.value, $1.width_bits);
+};
 
 lea_spec: TOK_LSQBR mem_expr TOK_RSQBR {  /* LEA does not use "mem ptr" */
     printf("TODO lea_spec\n"); 
@@ -198,7 +199,6 @@ segment_override: TOK_SEG_REG TOK_COLON {
 };
 
 
-// cmp    BYTE PTR [rdx+rax*1-0x1],0xa
 // mov    DWORD PTR [rbx+rdx*4+0x20],ecx
 // lea    ecx,[rsi*8+0x0]
 // nop    WORD PTR cs:[rax+rax*1+0x0]
@@ -230,7 +230,7 @@ bound operands
 
 mem_expr: indirect_addr_gpr
         | indirect_addr_gpr_plus_offset
-        | TOK_GPR TOK_PLUS TOK_GPR /* GPR + GPR (16-bit specific) */
+        | bx_bp_si_di
         | base_index_scale
         | base_index_scale_disp
         | vsib_mem_expr
@@ -254,7 +254,13 @@ indirect_addr_gpr_plus_offset: TOK_GPR TOK_PLUS TOK_CONSTANT {
      s->disp_val = XED_CAST(xed_uint64_t, -$3.value); /* Use negative constant */
      s->disp_width_bits = $3.width_bits;
 
-}; 
+};
+
+ /* BX/BP + SI/DI (16-bit specific) */
+bx_bp_si_di: TOK_GPR TOK_PLUS TOK_GPR {
+     s->base_reg = $1;
+     s->index_reg = $3;
+};
 
  /* Base + Index GPR * Scale */
 base_index_scale: TOK_GPR TOK_PLUS TOK_GPR TOK_MULTI TOK_CONSTANT {

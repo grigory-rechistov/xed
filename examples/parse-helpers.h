@@ -30,6 +30,7 @@ typedef struct {
     /* TODO give better names to members */
     xed_uint_t regnum; /* sequential number of register operand */
     xed_uint_t memop; /* sequential number of memory operand */
+    xed_uint_t immed_num; /* sequential number of literal constant */
 
     xed_uint_t deduced_operand_size; /* From register size: AX, EAX, RAX etc. */
     xed_int_t deduced_vector_length; /* (XYZ)MM, -1 for absent */
@@ -68,5 +69,7 @@ xed_reg_enum_t parse_single_register(const char* txt);
 
 void fill_memory_operand(xed_encoder_request_t* req, parser_state_t *s);
 void fill_register_operand(xed_encoder_request_t* req, parser_state_t *s, xed_reg_enum_t reg_name);
+void fill_immediate_operand(xed_encoder_request_t* req, parser_state_t *s,
+                xed_uint64_t value, unsigned width_bits);
 
 #endif // PARSE_HELPERS_H

@@ -61,6 +61,7 @@ parse_encode_request(ascii_encode_request_t areq)
                                     .operand_index = 0,
                                     .regnum = 0,
                                     .memop = 0,
+                                    .immed_num = 0,
                                     .deduced_vector_length = -1,
                                     .memory_operand_bytes = 0,
                                     .disp_valid = false,

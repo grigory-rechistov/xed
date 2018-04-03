@@ -269,3 +269,36 @@ void fill_memory_operand(xed_encoder_request_t* req, parser_state_t *s)
     s->operand_index++;
 }
 
+void fill_immediate_operand(xed_encoder_request_t* req, parser_state_t *s,
+                xed_uint64_t value, unsigned orig_bits)
+{
+    unsigned width_bits = drag_to_accepted_immediate_width(orig_bits);
+    if (s->immed_num == 0) {
+        xed_encoder_request_set_uimm0_bits(req, value, width_bits);
+        xed_encoder_request_set_operand_order(req,
+                                              s->operand_index,
+                                              XED_OPERAND_IMM0);
+        /* TODO what to do with signed immediate? Dispatching based on opcode:
+           expecting signed, expecting relbranch, abs pointer etc. */
+        //xed_encoder_request_set_simm(
+        //req,
+        //XED_STATIC_CAST(xed_int32_t,simm.immed_val),
+        //simm.width_bits/8); //FIXME
+    } else if (s->immed_num == 1) {
+       if (width_bits != 8) {
+           fprintf(stderr, "[XED CLIENT ERROR] The second immediate may only"
+                           " be 8 bits wide\n");
+           exit(1);
+       }
+       xed_encoder_request_set_uimm1(req, value);
+       xed_encoder_request_set_operand_order(req,
+                                             s->operand_index,
+                                             XED_OPERAND_IMM1);
+   } else {
+       fprintf(stderr,
+            "[XED CLIENT ERROR] Only up to two immediate operands allowed\n");
+       exit(1);
+   }
+    s->immed_num++;
+    s->operand_index++;
+}
