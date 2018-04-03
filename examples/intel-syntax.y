@@ -47,20 +47,20 @@ void yyerror(xed_encoder_request_t *req, parser_state_t *state, const char* str)
 }
 
 %token<opcode_string> TOK_OPCODE
-%token<regname> TOK_GPR
 
 %token TOK_REPE_PREF
 %token TOK_REPNE_PREF
 %token TOK_LOCK_PREF
 
+%token<regname> TOK_GPR
 %token<regname> TOK_VEC_REG
-%token<regname> TOK_MASK_REG
 %token<regname> TOK_SEG_REG
 %token<regname> TOK_FPU_REG
 %token<regname> TOK_MMX_REG
 %token<regname> TOK_CONTROL_REG
 %token<regname> TOK_DEBUG_REG
 %token<regname> TOK_BOUND_REG
+%token<regname> TOK_OPMASK_REG
 
 %token<literal> TOK_CONSTANT
 %token TOK_MEMWIDTH
@@ -139,6 +139,7 @@ operand:  general_purpose_register
         | control_register
         | debug_register
         | bound_register
+        | opmask_register
         | immediate
         | lea_spec
         | mem_spec
@@ -169,6 +170,10 @@ debug_register: TOK_DEBUG_REG {
 };
 
 bound_register: TOK_BOUND_REG {
+        fill_register_operand(req, s, $1);
+};
+
+opmask_register: TOK_OPMASK_REG {
         fill_register_operand(req, s, $1);
 };
 
@@ -294,8 +299,8 @@ vsib_mem_expr:
         | TOK_GPR TOK_PLUS TOK_VEC_REG TOK_MULTI TOK_CONSTANT TOK_PLUS TOK_CONSTANT /* Base + Index Vector * Scale + constant */
 ;
 
-vec_register_masked: TOK_VEC_REG TOK_LCUBR TOK_MASK_REG TOK_RCUBR /* zmm30 {k3}*/
-                   | TOK_VEC_REG TOK_LCUBR TOK_MASK_REG TOK_RCUBR TOK_ZEROING /* zmm30 {k3} {z}*/
+vec_register_masked: TOK_VEC_REG TOK_LCUBR TOK_OPMASK_REG TOK_RCUBR /* zmm30 {k3}*/
+                   | TOK_VEC_REG TOK_LCUBR TOK_OPMASK_REG TOK_RCUBR TOK_ZEROING /* zmm30 {k3} {z}*/
 ;
 
 broadcast_expr: TOK_BCAST

@@ -139,8 +139,11 @@ BND[0-9]+ {
             return TOK_BOUND_REG;
 }
 
+K[0-7]  {
+            yylval.regname = parse_single_register(yytext);
+            return TOK_OPMASK_REG;
+}
 
-K[0-7] {DUP_YYTEXT(); return TOK_MASK_REG;} /* opmask registers */
 "{Z}" {return TOK_ZEROING;} /* vector mask zeroing specifier */
 "{ER}" {return TOK_ER;} /* embedded rounding */
 "{SAE}" {return TOK_SAE;} /* suppress all exceptions */
