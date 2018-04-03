@@ -62,6 +62,39 @@ void decorate_opcode_mnemonic(char* opcode, xed_uint_t len,
     xed_strncpy(opcode, tmp, len);
 }
 
+void handle_ambiguous_iclasses(xed_encoder_request_t *req, parser_state_t *s)
+{
+    /* Resolve naming ambiguities between mnemonics and iclasses.
+       Adjustment of iclass is done for the following cases:
+       TODO:
+       CALL_FAR CALL_NEAR
+       FXRSTOR vs FXRSTOR64 and other *SAVE/ *RSTR(64)
+       JMP JMP_FAR, RET_FAR RET_NEAR
+       PEXTRW PEXTRW_SSE4
+       VPEXTRW VPEXTRW_c5
+     */
+     switch (xed3_operand_get_iclass(req)) {
+     case XED_ICLASS_MOV: /* moves to control/debug registers */
+         if (s->seen_cr)
+             xed_encoder_request_set_iclass(req, XED_ICLASS_MOV_CR);
+         else if (s->seen_dr)
+             xed_encoder_request_set_iclass(req, XED_ICLASS_MOV_DR);
+         break;
+     case XED_ICLASS_MOVSD:
+         if (s->deduced_vector_length > 0) /* There are vector operands */
+             xed_encoder_request_set_iclass(req, XED_ICLASS_MOVSD_XMM);
+         break;
+     case XED_ICLASS_CMPSD:
+         if (s->deduced_vector_length > 0) /* There are vector operands */
+             xed_encoder_request_set_iclass(req, XED_ICLASS_CMPSD_XMM);
+         break;
+     /* TODO handle other cases */
+     default:
+         break;
+     }
+}
+
+
 /* The same mnemonic may have operands of different width. Adjust operands
     width when a GPR operand is known */
 void deduce_operand_width_gpr(xed_encoder_request_t* req, parser_state_t *s,
@@ -225,3 +258,4 @@ void fill_memory_operand(xed_encoder_request_t* req, parser_state_t *s)
     s->memop++;
     s->operand_index++;
 }
+

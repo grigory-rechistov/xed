@@ -121,6 +121,19 @@ MM[0-7]+ {yylval.regname = parse_single_register(yytext);
             return TOK_VEC_REG;
 }
 
+ /* Control registers */
+CR[0-9]+ {
+            yylval.regname = parse_single_register(yytext);
+            return TOK_CONTROL_REG;
+}
+
+ /* Debug registers */
+DR[0-9]+ {
+            yylval.regname = parse_single_register(yytext);
+            return TOK_DEBUG_REG;
+}
+
+
 K[0-7] {DUP_YYTEXT(); return TOK_MASK_REG;} /* opmask registers */
 "{Z}" {return TOK_ZEROING;} /* vector mask zeroing specifier */
 "{ER}" {return TOK_ER;} /* embedded rounding */

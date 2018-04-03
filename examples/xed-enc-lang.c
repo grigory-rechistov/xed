@@ -49,6 +49,7 @@ static void upcase(char* s) {
 }
 
 
+
 xed_encoder_request_t
 parse_encode_request(ascii_encode_request_t areq)
 {
@@ -85,6 +86,9 @@ parse_encode_request(ascii_encode_request_t areq)
     //yy_flex_debug = 1; // TODO remove
     yyparse(&req, &s);
     yy_delete_buffer(buffer);
+
+    handle_ambiguous_iclasses(&req, &s);
+
     return req;
 }
 

@@ -30,8 +30,6 @@ void yyerror(xed_encoder_request_t *req, parser_state_t *state, const char* str)
 #include <stdlib.h>
 #include "xed-encode.h"
 
-//extern void yyerror(xed_encoder_request_t *req, parser_state_t *state, const char* str);
-
 %}
 
 %union {
@@ -60,6 +58,8 @@ void yyerror(xed_encoder_request_t *req, parser_state_t *state, const char* str)
 %token<regname> TOK_SEG_REG
 %token<regname> TOK_FPU_REG
 %token<regname> TOK_MMX_REG
+%token<regname> TOK_CONTROL_REG
+%token<regname> TOK_DEBUG_REG
 
 %token<literal> TOK_CONSTANT
 %token TOK_MEMWIDTH
@@ -133,8 +133,10 @@ operands: /* no operands */
         | operands TOK_COMMA operand
 ;
 
-operand:  register
+operand:  general_purpose_register
         | vector_register
+        | control_register
+        | debug_register
         | immediate
         | lea_spec
         | mem_spec
@@ -145,7 +147,7 @@ operand:  register
         // | {kreg}, {sae}, {er}
 ;
 
-register: TOK_GPR {
+general_purpose_register: TOK_GPR {
         fill_register_operand(req, s, $1);
 };
 
@@ -153,8 +155,18 @@ vector_register: TOK_VEC_REG {
         xed_reg_enum_t reg_name = $1;
         printf("TODO add the rest of vector register logic \n");
         deduce_operand_width_vector(req, s, reg_name);
-}
-;
+};
+
+control_register: TOK_CONTROL_REG {
+        fill_register_operand(req, s, $1);
+        s->seen_cr = true;
+};
+
+debug_register: TOK_DEBUG_REG {
+        fill_register_operand(req, s, $1);
+        s->seen_dr = true;
+};
+
 
 immediate: TOK_CONSTANT // all types of literals
 ;

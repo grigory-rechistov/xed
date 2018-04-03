@@ -49,9 +49,14 @@ typedef struct {
     bool repe_seen;
     bool repne_seen;
     bool lock_seen;
+
+    /* Special cases when both opcode name and operands affect iclass */
+    bool seen_cr;
+    bool seen_dr;
 } parser_state_t;
 
 void decorate_opcode_mnemonic(char* opcode, xed_uint_t len, const parser_state_t *s);
+void handle_ambiguous_iclasses(xed_encoder_request_t *req, parser_state_t *s);
 
 void deduce_operand_width_gpr(xed_encoder_request_t* req, parser_state_t *s,
                               xed_reg_enum_t reg);
