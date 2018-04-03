@@ -213,12 +213,6 @@ K[0-7]  {
                             sizeof(yylval.opcode_string));
                 return TOK_OPCODE;}
 
-\n        {return T_NEWLINE;}
-
- /* Remains of multi-line lexer */
-<<EOF>>   {static int once = 0;
-           return once++? 0: T_NEWLINE;} /* Hack to turn the first EOF into newline */
-
  /* Unrecognized symbols.
    TODO add tracking of current position for better error reporting */
 .        { fprintf(stderr,

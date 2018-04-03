@@ -66,7 +66,6 @@ void yyerror(xed_encoder_request_t *req, parser_state_t *state, const char* str)
 %token TOK_MEMWIDTH
 
 
-%token T_NEWLINE
 %token TOK_COMMA
 %token TOK_LSQBR
 %token TOK_RSQBR
@@ -83,21 +82,11 @@ void yyerror(xed_encoder_request_t *req, parser_state_t *state, const char* str)
 %token TOK_BCAST
 %token TOK_ROUNDING
 
-
 %token TOK_GARBAGE
 
-%start toplevelexpr
+%start asmline
 
 %%
-
- /* TODO simplify, remove multi-line support */ 
-toplevelexpr:
-    | toplevelexpr line
-;
-
-line: T_NEWLINE
-     | asmline T_NEWLINE { printf("assembly line\n");}
-;
 
 asmline: prefixes opcode operands
 ;

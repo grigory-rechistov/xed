@@ -192,6 +192,16 @@ void fill_register_operand(xed_encoder_request_t* req, parser_state_t *s, xed_re
     s->regnum++;
 }
 
+/* Bring displacement width to a value that Xed actually can accept */
+static int drag_to_accepted_immediate_width(int width_bits) {
+        if (width_bits <= 8)
+            return 8;
+        else if (width_bits <= 16 /* && TODO valid in 16 bit mode only! */)
+            return 16;
+        else if (width_bits <= 32)
+            return 32;
+        return width_bits;
+}
 
 void fill_memory_operand(xed_encoder_request_t* req, parser_state_t *s)
 {
@@ -249,10 +259,10 @@ void fill_memory_operand(xed_encoder_request_t* req, parser_state_t *s)
             req,
             s->memory_operand_bytes); // BYTES
     if (s->disp_valid) {
-        /* TODO bring to one of accepted widths - 8, 16 (16-bit only), 32 */
-        unsigned int accepted_width = s->disp_width_bits/8;
+        unsigned int width_bytes =
+                        drag_to_accepted_immediate_width(s->disp_width_bits)/8;
         xed_encoder_request_set_memory_displacement(req, s->disp_val,
-                                                    accepted_width);
+                                                    width_bytes);
     }
 
     s->memop++;
