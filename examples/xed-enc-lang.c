@@ -26,8 +26,8 @@ END_LEGAL */
 #include "xed-examples-util.h"
 #include "xed-enc-lang.h"
 
-#include "calc.tab.h"
-#include "lexer.h"
+#include "intel-syntax.parser.h"
+#include "intel-syntax.lexer.h"
 
 /* TODO implement better error reporting */
 void yyerror(xed_encoder_request_t *req, parser_state_t *state, const char* string)

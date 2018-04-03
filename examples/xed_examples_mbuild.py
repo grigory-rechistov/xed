@@ -307,8 +307,8 @@ def build_examples(env, work_queue):
         
     if env['encoder']:
        cc_shared_files += env.src_dir_join([ 'xed-enc-lang.c'])
-       cc_shared_files += env.src_dir_join([ 'calc.tab.c'])
-       cc_shared_files += env.src_dir_join([ 'lex.yy.c'])
+       cc_shared_files += env.src_dir_join([ 'intel-syntax.parser.c'])
+       cc_shared_files += env.src_dir_join([ 'intel-syntax.lexer.c'])
        cc_shared_files += env.src_dir_join([ 'parse-helpers.c'])
     cc_shared_objs  = env.compile( examples_dag, cc_shared_files)
     # the XED command line tool

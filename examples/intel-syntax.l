@@ -15,7 +15,7 @@
 
 #include "xed-examples-util.h"
 #include "parse-helpers.h"
-#include "calc.tab.h"
+#include "intel-syntax.parser.h"
 
 /* Action for not-yet written rules */
 #define DUP_YYTEXT() do {xed_strncpy(yylval.garbage, yytext, 100);} while(0)

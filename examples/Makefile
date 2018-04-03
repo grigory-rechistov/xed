@@ -1,23 +1,17 @@
-CC := gcc
 FLEX := flex
 BISON := bison
-CFLAGS := -std=c99 -Wall -Werror -g
 
-all: calc
+all: parser-files
 
-parser: lex.yy.c calc.tab.c
+RESULT = intel-syntax.lexer.c intel-syntax.lexer.h intel-syntax.parser.c intel-syntax.parser.h
 
-lex.yy.c: calc.l calc.tab.h
-	$(FLEX) -d --header-file=lexer.h calc.l
+parser-files: $(RESULT)
 
-calc.tab.c calc.tab.h:	calc.y
-	$(BISON) -t -d calc.y
+intel-syntax.lexer.c: intel-syntax.l intel-syntax.parser.h
+	$(FLEX) -d --header-file=intel-syntax.lexer.h --outfile=intel-syntax.lexer.c intel-syntax.l
 
-calc: main.c lex.yy.c calc.tab.c calc.tab.h
-	$(CC) $(CFLAGS) -o calc calc.tab.c lex.yy.c main.c
+intel-syntax.parser.c intel-syntax.parser.h: intel-syntax.y
+	$(BISON) --output=intel-syntax.parser.c --defines -t intel-syntax.y
 
 clean:
-	rm -f calc calc.tab.c lex.yy.c calc.tab.h lexer.h *.o
-
-test: calc
-	cat test.s | ./calc
+	rm -f $(RESULT)
