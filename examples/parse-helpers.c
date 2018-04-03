@@ -371,3 +371,23 @@ void fill_far_pointer_operand(xed_encoder_request_t* req, parser_state_t *s,
     s->immed_num++;
     s->operand_index++;
 }
+
+
+void fill_mnemonic_opcode(xed_encoder_request_t* req, parser_state_t *s, char* opcode) {
+    xed_iclass_enum_t iclass = XED_ICLASS_INVALID;
+    /* Sometimes prefixes are encoded inside iclass. We've seen all prefixes
+      now and can act on them */
+    decorate_opcode_mnemonic(opcode, sizeof(opcode), s);
+    iclass =  str2xed_iclass_enum_t(opcode);
+    if (iclass == XED_ICLASS_INVALID) {
+        if (s->repne_seen || s->repe_seen || s->lock_seen)
+           fprintf(stderr,
+           "[XED CLIENT ERROR] Bad instruction name or incompatible"
+           " prefixes: '%s'\n", opcode);
+        else
+            fprintf(stderr,
+                "[XED CLIENT ERROR] Bad instruction name: '%s'\n", opcode);
+        exit(1);
+    }
+    xed_encoder_request_set_iclass(req, iclass);
+}

@@ -99,24 +99,8 @@ prefixes: /* empty */
 ;
 
 opcode: TOK_OPCODE {
-        xed_iclass_enum_t iclass = XED_ICLASS_INVALID;
-        /* Sometimes prefixes are encoded inside iclass. We've seen all prefixes
-           now and can act on them */
-        decorate_opcode_mnemonic($1, sizeof($1), s);
-        iclass =  str2xed_iclass_enum_t($1);
-        if (iclass == XED_ICLASS_INVALID) {
-            if (s->repne_seen || s->repe_seen || s->lock_seen)
-                fprintf(stderr,
-                "[XED CLIENT ERROR] Bad instruction name or incompatible"
-                " prefixes: '%s'\n", $1);
-            else
-                fprintf(stderr,
-                "[XED CLIENT ERROR] Bad instruction name: '%s'\n", $1);
-            exit(1);
-        }
-        xed_encoder_request_set_iclass(req, iclass);
-}
-;
+        fill_mnemonic_opcode(req, s, $1);
+};
 
 operands: /* no operands */
         | operand
