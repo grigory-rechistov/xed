@@ -30,12 +30,20 @@ void decorate_opcode_mnemonic(char* opcode, xed_uint_t len,
 {
     /* Use _NEAR variants as default iclass for "call" and "ret".
        They will be substituted with _FAR versions later, if needed */
-    if ( !strncmp(opcode, "CALL", 4)
-      || !strncmp(opcode, "RET", 4)) {
+    if ( !strncmp(opcode, "CALL", len)
+      || !strncmp(opcode, "RET", len)) {
         xed_strncat(opcode, "_NEAR", len);
         return;
     }
 
+    /* TODO handle aliases for conditional jumps */
+    if ( !strncmp(opcode, "JA", len)) {
+        strncpy(opcode, "JNBE", len);
+        return;
+    } else if (!strncmp(opcode, "JAE", len)) {
+        strncpy(opcode, "JNB", len);
+        return;
+    } // else TODO
 
     /* Sometimes prefixes are encoded inside iclass. We've seen all prefixes
        now and can act on them */
