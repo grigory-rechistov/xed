@@ -65,7 +65,7 @@ void yyerror(xed_encoder_request_t *req, parser_state_t *state, const char* str)
 %token<literal> TOK_CONSTANT
 %token TOK_MEMWIDTH
 
-
+%token TOK_FAR
 %token TOK_COMMA
 %token TOK_LSQBR
 %token TOK_RSQBR
@@ -100,6 +100,10 @@ prefixes: /* empty */
 
 opcode: TOK_OPCODE {
         fill_mnemonic_opcode(req, s, $1);
+}
+      | TOK_OPCODE TOK_FAR { /* far call/ret/jmp */
+        fill_mnemonic_opcode(req, s, $1);
+        s->seen_far_ptr = true;
 };
 
 operands: /* no operands */

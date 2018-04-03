@@ -173,6 +173,14 @@ K[0-7]  {
         return TOK_CONSTANT;
 }
 
+ /* far control flow instructions may have this standalone word */
+ "FAR" {
+     /* TODO decoder returns operand width = 48 for jmp far, but there
+        is no API to encode it */
+     // xed_encoder_request_set_effective_operand_width(req, 48);
+     return TOK_FAR;
+}
+
  /* Memory width specifiers */
  /* TODO support several spaces between 'byte' and 'ptr' */
 "BYTE PTR" {
