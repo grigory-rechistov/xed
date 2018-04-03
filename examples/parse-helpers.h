@@ -54,6 +54,7 @@ typedef struct {
     /* Special cases when both opcode name and operands affect iclass */
     bool seen_cr;
     bool seen_dr;
+    bool seen_far_ptr;
 } parser_state_t;
 
 void decorate_opcode_mnemonic(char* opcode, xed_uint_t len, const parser_state_t *s);
@@ -71,5 +72,8 @@ void fill_memory_operand(xed_encoder_request_t* req, parser_state_t *s);
 void fill_register_operand(xed_encoder_request_t* req, parser_state_t *s, xed_reg_enum_t reg_name);
 void fill_immediate_operand(xed_encoder_request_t* req, parser_state_t *s,
                 xed_uint64_t value, unsigned width_bits);
+void fill_far_pointer_operand(xed_encoder_request_t* req, parser_state_t *s,
+                xed_uint64_t seg_value, unsigned segment_bits,
+                xed_uint64_t offset_value, unsigned offset_bits);
 
 #endif // PARSE_HELPERS_H

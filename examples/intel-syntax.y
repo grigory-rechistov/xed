@@ -129,7 +129,8 @@ operand:  general_purpose_register
         | debug_register
         | bound_register
         | opmask_register
-        | immediate
+        | literal_const
+        | far_pointer
         | lea_spec
         | mem_spec
         | vec_register_masked
@@ -166,8 +167,18 @@ opmask_register: TOK_OPMASK_REG {
         fill_register_operand(req, s, $1);
 };
 
-immediate: TOK_CONSTANT {
+literal_const: TOK_CONSTANT {
         fill_immediate_operand(req, s, $1.value, $1.width_bits);
+};
+
+far_pointer: TOK_CONSTANT TOK_COLON TOK_CONSTANT {
+       fill_far_pointer_operand(req, s, $1.value, $1.width_bits, $3.value, $3.width_bits);
+       s->seen_far_ptr = true;
+}
+          | TOK_CONSTANT TOK_COLON TOK_MINUS TOK_CONSTANT {
+       /* Negate the offset */
+       fill_far_pointer_operand(req, s, $1.value, $1.width_bits, -$4.value, $4.width_bits);
+       s->seen_far_ptr = true;
 };
 
 lea_spec: TOK_LSQBR mem_expr TOK_RSQBR {  /* LEA does not use "mem ptr" */
@@ -210,6 +221,7 @@ segment_override: TOK_SEG_REG TOK_COLON {
 // vaddps zmm7 {k6}, zmm2, zmm4, {rd-sae}
 //  disp8*N.
 //  vpcompressd [rdi] {k1}, zmm1 - memory and masking from here: https://blogs.msdn.microsoft.com/vcblog/2017/07/11/microsoft-visual-studio-2017-supports-intel-avx-512/
+// invlpg, invpcid, invept etc
 
 
 /* TODO add support and tests for:

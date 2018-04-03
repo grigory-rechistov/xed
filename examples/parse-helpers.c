@@ -20,15 +20,25 @@ END_LEGAL */
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "xed-util.h"
 #include "parse-helpers.h"
 
-/* Sometimes prefixes are encoded inside iclass. We've seen all prefixes
-   now and can act on them */
 void decorate_opcode_mnemonic(char* opcode, xed_uint_t len,
                               const parser_state_t *s)
 {
+    /* Use _NEAR variants as default iclass for "call" and "ret".
+       They will be substituted with _FAR versions later, if needed */
+    if ( !strncmp(opcode, "CALL", 4)
+      || !strncmp(opcode, "RET", 4)) {
+        xed_strncat(opcode, "_NEAR", len);
+        return;
+    }
+
+
+    /* Sometimes prefixes are encoded inside iclass. We've seen all prefixes
+       now and can act on them */
     bool has_front_prefix = s->repe_seen || s->repne_seen;
     bool has_post_prefix = s->lock_seen;
 
@@ -56,8 +66,6 @@ void decorate_opcode_mnemonic(char* opcode, xed_uint_t len,
         const char *post_prefix = "_LOCK";
         xed_strncat(tmp, post_prefix, len);
     }
-    /* TODO do other Xed-specific transformations of mnemonic to iclass
-        E.g.: MOVSD -> MOVSD_XMM */
 
     xed_strncpy(opcode, tmp, len);
 }
@@ -67,27 +75,42 @@ void handle_ambiguous_iclasses(xed_encoder_request_t *req, parser_state_t *s)
     /* Resolve naming ambiguities between mnemonics and iclasses.
        Adjustment of iclass is done for the following cases:
        TODO:
-       CALL_FAR CALL_NEAR
        FXRSTOR vs FXRSTOR64 and other *SAVE/ *RSTR(64)
-       JMP JMP_FAR, RET_FAR RET_NEAR
        PEXTRW PEXTRW_SSE4
        VPEXTRW VPEXTRW_c5
      */
-     switch (xed3_operand_get_iclass(req)) {
-     case XED_ICLASS_MOV: /* moves to control/debug registers */
-         if (s->seen_cr)
-             xed_encoder_request_set_iclass(req, XED_ICLASS_MOV_CR);
-         else if (s->seen_dr)
-             xed_encoder_request_set_iclass(req, XED_ICLASS_MOV_DR);
+    switch (xed3_operand_get_iclass(req)) {
+    case XED_ICLASS_MOV: /* moves to control/debug registers */
+        if (s->seen_cr)
+            xed_encoder_request_set_iclass(req, XED_ICLASS_MOV_CR);
+        else if (s->seen_dr)
+            xed_encoder_request_set_iclass(req, XED_ICLASS_MOV_DR);
+        break;
+    case XED_ICLASS_MOVSD: /* string or SSE opcode? */
+        if (s->deduced_vector_length == 0) /* There are XMM operands */
+            xed_encoder_request_set_iclass(req, XED_ICLASS_MOVSD_XMM);
+        break;
+    case XED_ICLASS_CMPSD:
+        if (s->deduced_vector_length == 0) /* There are XMM operands */
+            xed_encoder_request_set_iclass(req, XED_ICLASS_CMPSD_XMM);
+        break;
+    case XED_ICLASS_CALL_NEAR: /* convert near to far if operands state that */
+        if (s->seen_far_ptr) {
+            xed_encoder_request_set_iclass(req, XED_ICLASS_CALL_FAR);
+        }
+        break;
+    case XED_ICLASS_RET_NEAR:
+         if (s->seen_far_ptr) {
+                 xed_encoder_request_set_iclass(req, XED_ICLASS_RET_FAR);
+         }
          break;
-     case XED_ICLASS_MOVSD: /* string or SSE opcode? */
-         if (s->deduced_vector_length == 0) /* There are XMM operands */
-             xed_encoder_request_set_iclass(req, XED_ICLASS_MOVSD_XMM);
-         break;
-     case XED_ICLASS_CMPSD:
-         if (s->deduced_vector_length == 0) /* There are XMM operands */
-             xed_encoder_request_set_iclass(req, XED_ICLASS_CMPSD_XMM);
-         break;
+    case XED_ICLASS_JMP:
+        if (s->seen_far_ptr) {
+            xed_encoder_request_set_iclass(req, XED_ICLASS_JMP_FAR);
+        }
+        break;
+
+
      /* TODO handle other cases */
      default:
          break;
@@ -299,6 +322,44 @@ void fill_immediate_operand(xed_encoder_request_t* req, parser_state_t *s,
             "[XED CLIENT ERROR] Only up to two immediate operands allowed\n");
        exit(1);
    }
+    s->immed_num++;
+    s->operand_index++;
+}
+
+void fill_far_pointer_operand(xed_encoder_request_t* req, parser_state_t *s,
+                xed_uint64_t seg_value, unsigned segment_bits,
+                xed_uint64_t offset_value, unsigned offset_bits)
+{
+    if (offset_bits > 32) {
+        fprintf(stderr, "[XED CLIENT ERROR] Far pointer offset is too wide\n");
+        exit(1);
+    }
+    offset_bits = offset_bits < 16? 16:32;
+
+    xed_encoder_request_set_branch_displacement(req,
+                    XED_STATIC_CAST(xed_uint32_t,offset_value),
+                    offset_bits/8);
+    xed_encoder_request_set_operand_order(req, s->operand_index,
+                                          XED_OPERAND_PTR);
+    xed_encoder_request_set_ptr(req);
+
+    s->operand_index++;
+
+    /* segment is encoded as immediate */
+    if (s->immed_num != 0) {
+        fprintf(stderr, "[XED CLIENT ERROR] Far pointer cannot"
+                        " follow immediate operand\n");
+        exit(1);
+    }
+    if (segment_bits > 16) {
+            fprintf(stderr, "[XED CLIENT ERROR] Far pointer"
+                            " segment is too wide\n");
+            exit(1);
+    }
+    xed_encoder_request_set_uimm0_bits(req, seg_value, 16);
+    xed_encoder_request_set_operand_order(req, s->operand_index,
+                                          XED_OPERAND_IMM0);
+
     s->immed_num++;
     s->operand_index++;
 }
