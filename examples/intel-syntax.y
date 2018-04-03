@@ -60,6 +60,7 @@ void yyerror(xed_encoder_request_t *req, parser_state_t *state, const char* str)
 %token<regname> TOK_MMX_REG
 %token<regname> TOK_CONTROL_REG
 %token<regname> TOK_DEBUG_REG
+%token<regname> TOK_BOUND_REG
 
 %token<literal> TOK_CONSTANT
 %token TOK_MEMWIDTH
@@ -137,6 +138,7 @@ operand:  general_purpose_register
         | vector_register
         | control_register
         | debug_register
+        | bound_register
         | immediate
         | lea_spec
         | mem_spec
@@ -166,6 +168,9 @@ debug_register: TOK_DEBUG_REG {
         s->seen_dr = true;
 };
 
+bound_register: TOK_BOUND_REG {
+        fill_register_operand(req, s, $1);
+};
 
 immediate: TOK_CONSTANT // all types of literals
 ;
