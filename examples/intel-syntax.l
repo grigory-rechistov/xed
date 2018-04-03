@@ -165,6 +165,7 @@ K[0-7] {DUP_YYTEXT(); return TOK_MASK_REG;} /* opmask registers */
 }
 
  /* Memory width specifiers */
+ /* TODO support several spaces between 'byte' and 'ptr' */
 "BYTE PTR" {
     s->memory_operand_bytes = 1;
     return TOK_MEMWIDTH;

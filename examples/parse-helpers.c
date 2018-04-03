@@ -80,12 +80,12 @@ void handle_ambiguous_iclasses(xed_encoder_request_t *req, parser_state_t *s)
          else if (s->seen_dr)
              xed_encoder_request_set_iclass(req, XED_ICLASS_MOV_DR);
          break;
-     case XED_ICLASS_MOVSD:
-         if (s->deduced_vector_length > 0) /* There are vector operands */
+     case XED_ICLASS_MOVSD: /* string or SSE opcode? */
+         if (s->deduced_vector_length == 0) /* There are XMM operands */
              xed_encoder_request_set_iclass(req, XED_ICLASS_MOVSD_XMM);
          break;
      case XED_ICLASS_CMPSD:
-         if (s->deduced_vector_length > 0) /* There are vector operands */
+         if (s->deduced_vector_length == 0) /* There are XMM operands */
              xed_encoder_request_set_iclass(req, XED_ICLASS_CMPSD_XMM);
          break;
      /* TODO handle other cases */

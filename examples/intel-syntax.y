@@ -152,9 +152,8 @@ general_purpose_register: TOK_GPR {
 };
 
 vector_register: TOK_VEC_REG {
-        xed_reg_enum_t reg_name = $1;
-        printf("TODO add the rest of vector register logic \n");
-        deduce_operand_width_vector(req, s, reg_name);
+        fill_register_operand(req, s, $1);
+        deduce_operand_width_vector(req, s, $1);
 };
 
 control_register: TOK_CONTROL_REG {
