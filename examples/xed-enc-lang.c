@@ -49,9 +49,9 @@ static void upcase(char* s) {
 }
 
 
-
+/* Make an encoder request from a string that follows Intel asm notation */
 xed_encoder_request_t
-parse_encode_request(ascii_encode_request_t areq)
+parse_intel_syntax_request(ascii_encode_request_t areq)
 {
 
     xed_encoder_request_t req;
@@ -386,7 +386,7 @@ static void find_vl(xed_reg_enum_t reg, xed_int_t* vl)
 }
 
 xed_encoder_request_t
-parse_encode_request_original(ascii_encode_request_t areq)
+parse_encode_request(ascii_encode_request_t areq)
 {
     unsigned int i;
     xed_encoder_request_t req;

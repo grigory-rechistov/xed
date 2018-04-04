@@ -114,7 +114,8 @@ static void print_intel_asm_emit(const xed_uint8_t* array, unsigned int olen) {
 }
 
 static unsigned int disas_encode(const xed_state_t* dstate,
-                                 const char* encode_text) {
+                                 const char* encode_text,
+                                 xed_bool_t intel_syntax_encode) {
     char buf[5000];
     xed_uint8_t array[XED_MAX_INSTRUCTION_BYTES];
     unsigned int ilen = XED_MAX_INSTRUCTION_BYTES;
@@ -125,7 +126,10 @@ static unsigned int disas_encode(const xed_state_t* dstate,
 
     areq.dstate = *dstate;
     areq.command = encode_text;
-    req = parse_encode_request(areq);
+    if (!intel_syntax_encode)
+        req = parse_encode_request(areq);
+    else
+        req = parse_intel_syntax_request(areq);
     xed_encode_request_print(&req, buf, 5000);
     printf("Request: %s", buf);
 
@@ -227,6 +231,7 @@ static void usage(char* prog) {
       "\t-e instruction            (encode, must be last)",
       "\t-ie file-to-assemble      (assemble the contents of the file)",
       "\t-de hex-string            (decode-then-encode, must be last)",
+      "\t-E intel-syntax           (encode instruction in Intel assembly notation)",
 #endif
       "",
       "Optional arguments:",
@@ -368,6 +373,7 @@ main(int argc, char** argv)
     char const* encode_text=0;
     xed_state_t dstate;
     xed_bool_t encode = 0;
+    xed_bool_t intel_syntax_encode = 0;
     unsigned int ninst = 100*1000*1000; // FIXME: should use maxint...
     //perf_tail is for skipping first insts in performance measure mode
     unsigned int perf_tail = 0;         
@@ -543,6 +549,17 @@ main(int argc, char** argv)
             input_file_name = argv[i+1];
             decode_only = 0;
             i++;
+        }
+        else if (strcmp(argv[i],"-E") ==0)         {
+            encode = 1;
+            intel_syntax_encode = 1;
+            test_argc(i,argc);
+            // merge the rest of the args in to the encode_text string.
+            for( j = i+1; j< argc; j++ )  {
+                encode_text = xedex_append_string(encode_text, argv[j]);
+                encode_text = xedex_append_string(encode_text, " ");
+            }
+            break;  // leave the loop
         }
 #endif
         else if (strcmp(argv[i],"-n") ==0)         {
@@ -795,7 +812,7 @@ main(int argc, char** argv)
     else if (encode)
     {
 #if defined(XED_ENCODER)
-        obytes = disas_encode(&dstate, encode_text);
+        obytes = disas_encode(&dstate, encode_text, intel_syntax_encode);
 #endif
     }
     else if (decode_text && strlen(decode_text) != 0)

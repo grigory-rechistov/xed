@@ -34,6 +34,6 @@ xed_encoder_request_t
 parse_encode_request(ascii_encode_request_t areq);
 
 xed_encoder_request_t
-parse_encode_request_original(ascii_encode_request_t areq);
+parse_intel_syntax_request(ascii_encode_request_t areq);
 
 #endif
