@@ -122,11 +122,10 @@ operand:  general_purpose_register
         | far_pointer
         | lea_spec
         | mem_spec
-        | vec_register_masked
+        | vec_register_filtered
         | broadcast_expr
-        // | far_ptr_spec
         // | segment reg, debug reg, control reg, x87 fpu, bnd reg
-        // | {kreg}, {sae}, {er}
+        // | {sae}, {er}
 ;
 
 general_purpose_register: TOK_GPR {
@@ -298,11 +297,30 @@ vsib_mem_expr:
         | TOK_GPR TOK_PLUS TOK_VEC_REG TOK_MULTI TOK_CONSTANT TOK_PLUS TOK_CONSTANT /* Base + Index Vector * Scale + constant */
 ;
 
-vec_register_masked: TOK_VEC_REG TOK_LCUBR TOK_OPMASK_REG TOK_RCUBR /* zmm30 {k3}*/
-                   | TOK_VEC_REG TOK_LCUBR TOK_OPMASK_REG TOK_RCUBR TOK_ZEROING /* zmm30 {k3} {z}*/
+vec_register_filtered: vec_register_masked
+                     | vec_register_masked_zeroed
 ;
 
-broadcast_expr: TOK_BCAST
-;
+ /* zmm30 {k3}*/
+vec_register_masked: TOK_VEC_REG TOK_LCUBR TOK_OPMASK_REG TOK_RCUBR {
+        fill_register_operand(req, s, $1); // main register
+        deduce_operand_width_vector(req, s, $1);
+        fill_register_operand(req, s, $3); // opmask register
+};
+
+ /* zmm30 {k3} {z}*/
+vec_register_masked_zeroed: TOK_VEC_REG TOK_LCUBR TOK_OPMASK_REG TOK_RCUBR TOK_ZEROING {
+        fill_register_operand(req, s, $1); // main register
+        deduce_operand_width_vector(req, s, $1);
+        fill_register_operand(req, s, $3); // opmask register
+        xed3_set_generic_operand(req, XED_OPERAND_ZEROING, 1);
+};
+
+broadcast_expr: TOK_BCAST {
+     /* TODO also support MASM notation: "bcast ptr" */
+     printf("TODO broadcast untested\n");
+     xed3_set_generic_operand(req, XED_OPERAND_BCAST, 1);
+
+};
 
 %%
