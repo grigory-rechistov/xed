@@ -47,8 +47,8 @@ void decorate_opcode_mnemonic(char* opcode, xed_uint_t len,
 
     /* Sometimes prefixes are encoded inside iclass. We've seen all prefixes
        now and can act on them */
-    bool has_front_prefix = s->repe_seen || s->repne_seen;
-    bool has_post_prefix = s->lock_seen;
+    xed_bool_t has_front_prefix = s->repe_seen || s->repne_seen;
+    xed_bool_t has_post_prefix = s->lock_seen;
 
     if (!has_front_prefix && !has_post_prefix)
         return;

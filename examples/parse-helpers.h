@@ -47,14 +47,14 @@ typedef struct {
     unsigned int disp_width_bits;
 
     /* Prefixes */
-    bool repe_seen;
-    bool repne_seen;
-    bool lock_seen;
+    xed_bool_t repe_seen;
+    xed_bool_t repne_seen;
+    xed_bool_t lock_seen;
 
     /* Special cases when both opcode name and operands affect iclass */
-    bool seen_cr;
-    bool seen_dr;
-    bool seen_far_ptr;
+    xed_bool_t seen_cr;
+    xed_bool_t seen_dr;
+    xed_bool_t seen_far_ptr;
 } parser_state_t;
 
 void decorate_opcode_mnemonic(char* opcode, xed_uint_t len, const parser_state_t *s);
