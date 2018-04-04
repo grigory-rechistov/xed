@@ -257,7 +257,6 @@ K[0-7]  {
 
  /* This rule must be the last one as it matches all words */
 {ALPHANUMWORD} {
-                printf("lex opcode = '%s'\n", yytext);
                 xed_strncpy(yylval.opcode_string, yytext,
                             sizeof(yylval.opcode_string));
                 return TOK_OPCODE;}
