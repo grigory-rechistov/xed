@@ -1,5 +1,6 @@
 /* Parser for assembly in Intel notation for XED */
 
+
 %code requires {
 #include <stdbool.h>
 #include "xed-encode.h"
@@ -22,6 +23,8 @@ void yyerror(xed_encoder_request_t *req, parser_state_t *state, const char* str)
 %lex-param { parser_state_t *s}
 %parse-param { xed_encoder_request_t *req}
 %parse-param { parser_state_t *s}
+
+// %define parse.error verbose /* Only works with newer Bison versions */
 
 
 %{

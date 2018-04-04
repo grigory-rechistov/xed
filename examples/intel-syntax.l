@@ -36,10 +36,10 @@ GPR_2 (E|R)?[SD]I
  /* RBP, RSP */
 GPR_3 (E|R)?[BS]P
 
- /* R8-R15, TODO limit number range */
+ /* R8-R15, */
 GPR_4 R[0-9]+
 
- /* R8L-R15D, TODO limit number range */
+ /* R8L-R15D */
 GPR_5 R[0-9][LWD]+
 
  /* AH-DL */
@@ -144,7 +144,7 @@ MM[0-7]+ {
 }
 
 
- /* XMM, YMM, ZMM TODO limit number range */
+ /* XMM, YMM, ZMM */
 (X|Y|Z)MM[0-9]+ {
             yylval.regname = parse_single_register(yytext);
             return TOK_VEC_REG;
@@ -177,7 +177,7 @@ K[0-7]  {
 "{ER}" {return TOK_ER;} /* embedded rounding */
 "{SAE}" {return TOK_SAE;} /* suppress all exceptions */
 
- /* broadcast {1toX}. TODO it ignore actual number of items */
+ /* broadcast {1toX}. TODO it ignores actual number of items */
 "{1TO"[0-9]+"}" {return TOK_BCAST;}
 
 "{R"[NDUZ]"-SAE}" {DUP_YYTEXT(); return TOK_ROUNDING;}  /* embedded rounding
