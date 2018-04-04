@@ -115,6 +115,7 @@ operand:  general_purpose_register
         | control_register
         | debug_register
         | bound_register
+        | fpu_or_mmx_register
         | opmask_register
         | literal_const
         | negative_literal
@@ -146,6 +147,13 @@ debug_register: TOK_DEBUG_REG {
 };
 
 bound_register: TOK_BOUND_REG {
+        fill_register_operand(req, s, $1);
+};
+
+fpu_or_mmx_register: TOK_FPU_REG {
+        fill_register_operand(req, s, $1);
+}
+                   | TOK_MMX_REG {
         fill_register_operand(req, s, $1);
 };
 

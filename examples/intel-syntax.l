@@ -105,15 +105,44 @@ LOCK { /* To be encoded into iclass */
            return TOK_SEG_REG;
 }
 
- /* x87 FPU regs */
-ST[0-7] {yylval.regname = parse_single_register(yytext);
-         return TOK_FPU_REG;
- }
 
- /* MMX registers */
-MM[0-7]+ {yylval.regname = parse_single_register(yytext);
-          return TOK_MMX_REG;
+ /* x87 FPU regs */
+ /* XXX Xed recognizes only lowercase names for x87 registers: st(0) - st(7) */
+
+ST {yylval.regname = parse_single_register("st(0)"); /* Top of stack */
+         return TOK_FPU_REG;
 }
+
+ /* Intel SDM variant */
+ST"("[0-7]")" {
+        char mangled_name[] = "st(0)";
+        mangled_name[3] += yytext[3] - '0';
+        yylval.regname = parse_single_register(mangled_name);
+        return TOK_FPU_REG;
+}
+
+ /* Variants without braces: ST0-ST7 */
+ST[0-7] {
+        char mangled_name[] = "st(0)";
+        mangled_name[3] += yytext[2] - '0';
+        yylval.regname = parse_single_register(mangled_name);
+        return TOK_FPU_REG;
+}
+
+ /* MMX registers, XED notation */
+MMX[0-7]+ {
+        yylval.regname = parse_single_register(yytext);
+        return TOK_MMX_REG;
+}
+
+ /* Proper names from SDM: MM0-MM7 */
+MM[0-7]+ {
+        char mangled_name[] = "MMX0";
+        mangled_name[3] += yytext[2] - '0';
+        yylval.regname = parse_single_register(mangled_name);
+        return TOK_MMX_REG;
+}
+
 
  /* XMM, YMM, ZMM TODO limit number range */
 (X|Y|Z)MM[0-9]+ {
