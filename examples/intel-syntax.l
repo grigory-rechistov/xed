@@ -148,19 +148,20 @@ K[0-7]  {
 "{ER}" {return TOK_ER;} /* embedded rounding */
 "{SAE}" {return TOK_SAE;} /* suppress all exceptions */
 
-"{1TO"[0-9]+"}" {DUP_YYTEXT(); return TOK_BCAST;}  /* broadcast {1to16} */
+ /* broadcast {1toX}. TODO it ignore actual number of items */
+"{1TO"[0-9]+"}" {return TOK_BCAST;}
+
 "{R"[NDUZ]"-SAE}" {DUP_YYTEXT(); return TOK_ROUNDING;}  /* embedded rounding
                                                            with suppress all exceptions {rn-sae} */
 
 "{" {return TOK_LCUBR;} /* should go after tokens above that include curly braces */
 "}" {return TOK_RCUBR;}
 
-
  /* hexadecimal signed number */
 0X[0-9A-F]+ {
-        const char* digits = yytext+2; /* skip "0x"*/
+        const char* digits = yytext+2; /* skip "0x" */
         yylval.literal.value = xed_strtoll(digits, 16);
-        yylval.literal.width_bits = XED_CAST(unsigned int,strlen(digits)*4);
+        yylval.literal.width_bits = XED_CAST(unsigned int, strlen(digits)*4);
         return TOK_CONSTANT;
 }
 
@@ -226,7 +227,8 @@ K[0-7]  {
 .        { fprintf(stderr,
            "[XED CLIENT ERROR] Unexpected symbol: '%s'\n", yytext);
            exit(1);
-           return TOK_GARBAGE;}
+           return TOK_GARBAGE;
+}
 
 %%
 

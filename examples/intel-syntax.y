@@ -40,7 +40,6 @@ void yyerror(xed_encoder_request_t *req, parser_state_t *state, const char* str)
     } literal;
 
     char memwidth;
-    char broadcastspec;
     char roundingspec;
     char opcode_string[100];
     char garbage[100];
@@ -123,8 +122,7 @@ operand:  general_purpose_register
         | lea_spec
         | mem_spec
         | vec_register_filtered
-        | broadcast_expr
-        // | segment reg, debug reg, control reg, x87 fpu, bnd reg
+        //  x87 fpu, bnd reg
         // | {sae}, {er}
 ;
 
@@ -188,11 +186,11 @@ mem_spec:  segment_override_mem_spec
          | default_segment_mem_spec
 ;
 
-segment_override_mem_spec: TOK_MEMWIDTH segment_override TOK_LSQBR mem_expr TOK_RSQBR {
+segment_override_mem_spec: TOK_MEMWIDTH segment_override TOK_LSQBR mem_expr TOK_RSQBR broadcast_expr {
           fill_memory_operand(req, s);
 };
       
-default_segment_mem_spec: TOK_MEMWIDTH TOK_LSQBR mem_expr TOK_RSQBR {
+default_segment_mem_spec: TOK_MEMWIDTH TOK_LSQBR mem_expr TOK_RSQBR broadcast_expr {
         fill_memory_operand(req, s);
 };
 
@@ -292,6 +290,7 @@ base_index_scale_disp: TOK_GPR TOK_PLUS TOK_GPR TOK_MULTI TOK_CONSTANT TOK_PLUS 
 };
 
 
+ /* TODO implement VSIB */
 vsib_mem_expr:
         | TOK_GPR TOK_PLUS TOK_VEC_REG TOK_MULTI TOK_CONSTANT /* Base + Index Vector * Scale */
         | TOK_GPR TOK_PLUS TOK_VEC_REG TOK_MULTI TOK_CONSTANT TOK_PLUS TOK_CONSTANT /* Base + Index Vector * Scale + constant */
@@ -301,26 +300,28 @@ vec_register_filtered: vec_register_masked
                      | vec_register_masked_zeroed
 ;
 
- /* zmm30 {k3}*/
+ /* zmm30 {k3} */
 vec_register_masked: TOK_VEC_REG TOK_LCUBR TOK_OPMASK_REG TOK_RCUBR {
+        /* TODO check that used only once */
         fill_register_operand(req, s, $1); // main register
         deduce_operand_width_vector(req, s, $1);
         fill_register_operand(req, s, $3); // opmask register
 };
 
- /* zmm30 {k3} {z}*/
+ /* zmm30 {k3} {z} */
 vec_register_masked_zeroed: TOK_VEC_REG TOK_LCUBR TOK_OPMASK_REG TOK_RCUBR TOK_ZEROING {
+        /* TODO check that used only once */
         fill_register_operand(req, s, $1); // main register
         deduce_operand_width_vector(req, s, $1);
         fill_register_operand(req, s, $3); // opmask register
         xed3_set_generic_operand(req, XED_OPERAND_ZEROING, 1);
 };
 
-broadcast_expr: TOK_BCAST {
-     /* TODO also support MASM notation: "bcast ptr" */
-     printf("TODO broadcast untested\n");
-     xed3_set_generic_operand(req, XED_OPERAND_BCAST, 1);
-
+ /* 1toX memory broadcast */
+broadcast_expr: /* empty */
+                | TOK_BCAST {
+             /* TODO also support MASM notation: "bcast ptr" */
+             xed3_set_generic_operand(req, XED_OPERAND_BCAST, 1);
 };
 
 %%
