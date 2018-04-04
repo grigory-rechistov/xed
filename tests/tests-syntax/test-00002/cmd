@@ -1,0 +1,1 @@
+ BUILDDIR/xed -E jmp far mem ptr [eax]
