@@ -1,0 +1,3 @@
+Request: NOP MODE:1, SMODE:1
+Encodable! 90
+.byte 0x90
