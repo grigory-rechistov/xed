@@ -216,28 +216,23 @@ segment_override: TOK_SEG_REG TOK_COLON {
 // nop    WORD PTR cs:[rax+rax*1+0x0]
 // vgatherdpd zmm30{k1},qword [r14+ymm31*8+0x7b]
 
-/* TODO support these notations: */
+/* TODO add support and tests for:
 // VADDPD zmm0 {k1},zmm1,zmm3,{rz-sae}
 // vaddps zmm7 {k6}, zmm2, zmm4, {rd-sae}
 //  disp8*N.
 //  vpcompressd [rdi] {k1}, zmm1 - memory and masking from here: https://blogs.msdn.microsoft.com/vcblog/2017/07/11/microsoft-visual-studio-2017-supports-intel-avx-512/
 // invlpg, invpcid, invept etc
 
-
-/* TODO add support and tests for:
 unspecified memory width "mem ptr" without word/dword etc.: xsave, sgdt etc.
 bnd registers, mib memory operands
-debug registers
-control registers
-long pointers
-mm, xmm instructions: movq2dq
+
 mixed operand width: movsx
 string operations with segment overrides
 shifts with constant/CL
 bound operands
+ V4FMADDPS zmm1{k1}{z}, zmm2+3, m128 - a pair of zmm registers
 */
 
-// V4FMADDPS zmm1{k1}{z}, zmm2+3, m128 - a pair of zmm registers
 
 
 mem_expr: indirect_addr_gpr
@@ -330,9 +325,8 @@ vec_register_masked_zeroed: TOK_VEC_REG TOK_LCUBR TOK_OPMASK_REG TOK_RCUBR TOK_Z
 
  /* 1toX memory broadcast */
 broadcast_expr: /* empty */
-                | TOK_BCAST {
-             /* TODO also support MASM notation: "bcast ptr" */
-             xed3_set_generic_operand(req, XED_OPERAND_BCAST, 1);
+              | TOK_BCAST {
+        xed3_set_generic_operand(req, XED_OPERAND_BCAST, 1);
 };
 
 %%

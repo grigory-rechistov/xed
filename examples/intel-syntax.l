@@ -213,6 +213,19 @@ K[0-7]  {
 
  /* Memory width specifiers */
  /* TODO support several spaces between 'byte' and 'ptr' */
+
+"MEM PTR" {
+    //s->memory_operand_bytes = 0; // ???
+    return TOK_MEMWIDTH;
+}
+
+ /* MASM notation for embedded broadcast */
+"BCAST PTR" {
+    xed3_set_generic_operand(req, XED_OPERAND_BCAST, 1);
+    return TOK_MEMWIDTH;
+}
+
+
 "BYTE PTR" {
     s->memory_operand_bytes = 1;
     return TOK_MEMWIDTH;
@@ -238,8 +251,6 @@ K[0-7]  {
     s->memory_operand_bytes = yytext[0] == 'X'? 16:
                               yytext[0] == 'Y'? 32:
                               yytext[0] == 'Z'? 64: -1;
-    printf("FIXME ?mmword ptr case not done\n");
-    //xed3_operand_set_vl(req,(xed_uint_t)(yytext[0] - 'X'));
     return TOK_MEMWIDTH;
 }
 
