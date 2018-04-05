@@ -441,7 +441,8 @@ void fill_mnemonic_opcode(xed_encoder_request_t* req, parser_state_t *s, char* o
         else
             fprintf(stderr,
                 "[XED CLIENT ERROR] Bad instruction name: '%s'\n", opcode);
-        exit(1);
+        s->error_found = 1;
+        return;
     }
     xed_encoder_request_set_iclass(req, iclass);
 

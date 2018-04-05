@@ -72,6 +72,7 @@ parse_intel_syntax_request(ascii_encode_request_t areq)
                                     .scale_val = 1,
                                     .disp_val = 0,
                                     .disp_width_bits = 0,
+                                    .error_found = 0,
                                     };
 
     char upcase_command[5000];
@@ -84,8 +85,12 @@ parse_intel_syntax_request(ascii_encode_request_t areq)
         upcase_command[len-1] = '\0';
 
     YY_BUFFER_STATE buffer = yy_scan_string(upcase_command);
-    yyparse(&req, &s);
+    int result = yyparse(&req, &s);
     yy_delete_buffer(buffer);
+    if (result) { // TODO use YYABORT everywhere instead of exit(1) in actions
+        xedex_derror("Parsing failed");
+        exit(1);
+    }
 
     handle_ambiguous_iclasses(&req, &s);
 

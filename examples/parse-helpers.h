@@ -59,6 +59,8 @@ typedef struct {
     xed_bool_t seen_cr;
     xed_bool_t seen_dr;
     xed_bool_t seen_far_ptr;
+
+    xed_bool_t error_found; /* flag to signal Xed errors to parser function */
 } parser_state_t;
 
 void handle_ambiguous_iclasses(xed_encoder_request_t *req, parser_state_t *s);
