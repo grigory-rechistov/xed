@@ -6,10 +6,11 @@
 #include "xed-encode.h"
 #include "parse-helpers.h"
 
-// remove when done debugging
-#undef YYDEBUG
-#define YYDEBUG 1
-
+/* Deprecated, use 'parse.error verbose' option for newer Bison */
+#ifdef YYERROR_VERBOSE
+# undef YYERROR_VERBOSE
+# define YYERROR_VERBOSE 1
+#endif
 
 #define YY_DECL int yylex(xed_encoder_request_t *req, parser_state_t *s)
 
@@ -25,7 +26,6 @@ void yyerror(xed_encoder_request_t *req, parser_state_t *state, const char* str)
 %parse-param { parser_state_t *s}
 
 // %define parse.error verbose /* Only works with newer Bison versions */
-
 
 %{
 
