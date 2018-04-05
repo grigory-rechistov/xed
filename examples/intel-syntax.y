@@ -1,5 +1,5 @@
 /* Parser for assembly in Intel notation for XED */
-
+/* TODO: make parser reentrant */
 
 %code requires {
 #include <stdbool.h>

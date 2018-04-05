@@ -1,4 +1,5 @@
 /* Parser for assembly in Intel notation for XED */
+/* TODO: make lexer reentrant: https://www.lemoda.net/c/reentrant-parser/ */
 
 /* Do not generate unused functions */
 %option noinput
@@ -261,11 +262,11 @@ K[0-7]  {
                             sizeof(yylval.opcode_string));
                 return TOK_OPCODE;}
 
- /* Unrecognized symbols.
+ /* Any unrecognized symbol
    TODO add tracking of current position for better error reporting */
 .        { fprintf(stderr,
            "[XED CLIENT ERROR] Unexpected symbol: '%s'\n", yytext);
-           exit(1);
+           s->error_found = 1;
            return TOK_GARBAGE;
 }
 
