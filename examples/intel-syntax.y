@@ -121,7 +121,7 @@ operand:  general_purpose_register
         | fpu_or_mmx_register
         | opmask_register
         | literal_const
-        | negative_literal
+        | signed_literal
         | far_pointer
         | lea_spec
         | mem_spec
@@ -172,11 +172,17 @@ literal_const: TOK_CONSTANT {
             fill_immediate_operand(req, s, $1.value, $1.width_bits);
 };
 
-negative_literal: TOK_MINUS TOK_CONSTANT {
+signed_literal: TOK_MINUS TOK_CONSTANT {
         if (instr_category_uses_rel_branch(s->early_category))
             fill_relative_offset_operand(req, s, -$2.value, $2.width_bits);
         else
             fill_immediate_operand(req, s, -$2.value, $2.width_bits);
+}
+              | TOK_PLUS TOK_CONSTANT {
+        if (instr_category_uses_rel_branch(s->early_category))
+            fill_relative_offset_operand(req, s, +$2.value, $2.width_bits);
+        else
+            fill_immediate_operand(req, s, +$2.value, $2.width_bits);
 };
 
 far_pointer: TOK_CONSTANT TOK_COLON TOK_CONSTANT {
