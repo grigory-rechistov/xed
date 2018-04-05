@@ -29,13 +29,6 @@ END_LEGAL */
 #include "intel-syntax.parser.h"
 #include "intel-syntax.lexer.h"
 
-/* TODO implement better error reporting */
-void yyerror(xed_encoder_request_t *req, parser_state_t *state, const char* string)
-{
-    fprintf(stderr, "[XED_CLIENT_ERROR] Scanner parsing error: %s\n", string);
-    exit(1);
-}
-
 static char xed_enc_lang_toupper(char c) {
     if (c >= 'a' && c <= 'z')
         return c-'a'+'A';

@@ -14,10 +14,6 @@
 
 #define YY_DECL int yylex(xed_encoder_request_t *req, parser_state_t *s)
 
-int yylex(xed_encoder_request_t *req, parser_state_t *s);
-void yyerror(xed_encoder_request_t *req, parser_state_t *state, const char* str);
-
-
 } // code requires
 
 %lex-param { xed_encoder_request_t *req}
