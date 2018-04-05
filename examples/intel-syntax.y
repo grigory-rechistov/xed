@@ -164,12 +164,19 @@ opmask_register: TOK_OPMASK_REG {
         fill_register_operand(req, s, $1);
 };
 
+ /* Either immediate or relative branch displacement */
 literal_const: TOK_CONSTANT {
-        fill_immediate_operand(req, s, $1.value, $1.width_bits);
+        if (instr_category_uses_rel_branch(s->early_category))
+            fill_relative_offset_operand(req, s, $1.value, $1.width_bits);
+        else
+            fill_immediate_operand(req, s, $1.value, $1.width_bits);
 };
 
 negative_literal: TOK_MINUS TOK_CONSTANT {
-        fill_immediate_operand(req, s, -$2.value, $2.width_bits);
+        if (instr_category_uses_rel_branch(s->early_category))
+            fill_relative_offset_operand(req, s, -$2.value, $2.width_bits);
+        else
+            fill_immediate_operand(req, s, -$2.value, $2.width_bits);
 };
 
 far_pointer: TOK_CONSTANT TOK_COLON TOK_CONSTANT {
@@ -299,8 +306,9 @@ base_index_scale_disp: TOK_GPR TOK_PLUS TOK_GPR TOK_MULTI TOK_CONSTANT TOK_PLUS 
  /* TODO implement VSIB */
 vsib_mem_expr:
         | TOK_GPR TOK_PLUS TOK_VEC_REG TOK_MULTI TOK_CONSTANT /* Base + Index Vector * Scale */
-        | TOK_GPR TOK_PLUS TOK_VEC_REG TOK_MULTI TOK_CONSTANT TOK_PLUS TOK_CONSTANT /* Base + Index Vector * Scale + constant */
-;
+        | TOK_GPR TOK_PLUS TOK_VEC_REG TOK_MULTI TOK_CONSTANT TOK_PLUS TOK_CONSTANT /* Base + Index Vector * Scale + constant */ {
+        printf("TODO VSIB not implemented\n");
+};
 
 vec_register_filtered: vec_register_masked
                      | vec_register_masked_zeroed

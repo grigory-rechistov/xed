@@ -86,6 +86,7 @@ void handle_ambiguous_iclasses(xed_encoder_request_t *req, parser_state_t *s)
        FXRSTOR vs FXRSTOR64 and other *SAVE/ *RSTR(64)
        PEXTRW PEXTRW_SSE4
        VPEXTRW VPEXTRW_c5
+       Long NOPs: XED_ICLASS_NOP2 - NOP9
      */
     switch (xed3_operand_get_iclass(req)) {
     case XED_ICLASS_MOV: /* moves to control/debug registers */
@@ -468,5 +469,17 @@ void fill_relative_offset_operand(xed_encoder_request_t* req, parser_state_t *s,
 
     s->relbr_num++;
     s->operand_index++;
+}
+
+xed_bool_t instr_category_uses_rel_branch(xed_category_enum_t cat) {
+    switch (cat) {
+        case XED_CATEGORY_CALL:
+        case XED_CATEGORY_COND_BR:
+        case XED_CATEGORY_UNCOND_BR:
+            return 1;
+        default:
+            return 0;
+    }
+    return 0;
 }
 

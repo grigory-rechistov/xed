@@ -81,5 +81,6 @@ void fill_far_pointer_operand(xed_encoder_request_t* req, parser_state_t *s,
                 xed_uint64_t offset_value, unsigned offset_bits);
 void fill_relative_offset_operand(xed_encoder_request_t* req, parser_state_t *s,
                                   xed_uint64_t value, unsigned orig_bits);
+xed_bool_t instr_category_uses_rel_branch(xed_category_enum_t cat);
 
 #endif // PARSE_HELPERS_H
