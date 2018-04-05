@@ -25,12 +25,15 @@ END_LEGAL */
 #include "xed/xed-interface.h"
 
 typedef struct {
+    xed_category_enum_t early_category; /* early classification of opcode */
+
     xed_state_t* dstate;
     xed_uint_t operand_index; /* sequential number of all operands */
     /* TODO give better names to members */
     xed_uint_t regnum; /* sequential number of register operand */
     xed_uint_t memop; /* sequential number of memory operand */
     xed_uint_t immed_num; /* sequential number of literal constant */
+    xed_uint_t relbr_num; /* sequential number of relative branch literal */
 
     xed_uint_t deduced_operand_size; /* From register size: AX, EAX, RAX etc. */
     xed_int_t deduced_vector_length; /* (XYZ)MM, -1 for absent */
@@ -42,6 +45,7 @@ typedef struct {
     xed_reg_enum_t index_reg;
     xed_uint8_t scale_val;
 
+    /* Literal displacement */
     xed_bool_t disp_valid;
     xed_int64_t disp_val;
     unsigned int disp_width_bits;
@@ -57,7 +61,6 @@ typedef struct {
     xed_bool_t seen_far_ptr;
 } parser_state_t;
 
-void decorate_opcode_mnemonic(char* opcode, xed_uint_t len, const parser_state_t *s);
 void handle_ambiguous_iclasses(xed_encoder_request_t *req, parser_state_t *s);
 
 void deduce_operand_width_gpr(xed_encoder_request_t* req, parser_state_t *s,
@@ -76,5 +79,7 @@ void fill_immediate_operand(xed_encoder_request_t* req, parser_state_t *s,
 void fill_far_pointer_operand(xed_encoder_request_t* req, parser_state_t *s,
                 xed_uint64_t seg_value, unsigned segment_bits,
                 xed_uint64_t offset_value, unsigned offset_bits);
+void fill_relative_offset_operand(xed_encoder_request_t* req, parser_state_t *s,
+                                  xed_uint64_t value, unsigned orig_bits);
 
 #endif // PARSE_HELPERS_H

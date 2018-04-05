@@ -25,8 +25,8 @@ END_LEGAL */
 #include "xed-util.h"
 #include "parse-helpers.h"
 
-void decorate_opcode_mnemonic(char* opcode, xed_uint_t len,
-                              const parser_state_t *s)
+static void decorate_opcode_mnemonic(char* opcode, xed_uint_t len,
+                                     const parser_state_t *s)
 {
     /* Use _NEAR variants as default iclass for "call" and "ret".
        They will be substituted with _FAR versions later, if needed */
@@ -36,7 +36,7 @@ void decorate_opcode_mnemonic(char* opcode, xed_uint_t len,
         return;
     }
 
-    /* TODO handle aliases for conditional jumps */
+    /* TODO handle aliases for all conditional jumps */
     if ( !strncmp(opcode, "JA", len)) {
         strncpy(opcode, "JNBE", len);
         return;
@@ -224,7 +224,7 @@ void fill_register_operand(xed_encoder_request_t* req, parser_state_t *s, xed_re
 }
 
 /* Bring displacement width to a value that Xed actually can accept */
-static int drag_to_accepted_immediate_width(int width_bits) {
+static int drag_to_accepted_literal_width(int width_bits) {
         if (width_bits <= 8)
             return 8;
         else if (width_bits <= 16 /* && TODO valid in 16 bit mode only! */)
@@ -291,7 +291,7 @@ void fill_memory_operand(xed_encoder_request_t* req, parser_state_t *s)
             s->memory_operand_bytes); // BYTES
     if (s->disp_valid) {
         unsigned int width_bytes =
-                        drag_to_accepted_immediate_width(s->disp_width_bits)/8;
+                        drag_to_accepted_literal_width(s->disp_width_bits)/8;
         xed_encoder_request_set_memory_displacement(req, s->disp_val,
                                                     width_bytes);
     }
@@ -303,7 +303,7 @@ void fill_memory_operand(xed_encoder_request_t* req, parser_state_t *s)
 void fill_immediate_operand(xed_encoder_request_t* req, parser_state_t *s,
                 xed_uint64_t value, unsigned orig_bits)
 {
-    unsigned width_bits = drag_to_accepted_immediate_width(orig_bits);
+    unsigned width_bits = drag_to_accepted_literal_width(orig_bits);
     if (s->immed_num == 0) {
         xed_encoder_request_set_uimm0_bits(req, value, width_bits);
         xed_encoder_request_set_operand_order(req,
@@ -373,12 +373,65 @@ void fill_far_pointer_operand(xed_encoder_request_t* req, parser_state_t *s,
 }
 
 
+/* Convert important iclasses to category, return invalid for the rest */
+static xed_category_enum_t early_categorize_iclass(xed_iclass_enum_t iclass) {
+
+    /* Currently we are interested in control flow instructions */
+    switch (iclass) {
+    case XED_ICLASS_JMP:
+    case XED_ICLASS_JMP_FAR:
+        return XED_CATEGORY_UNCOND_BR;
+        break;
+    case XED_ICLASS_JB:
+    case XED_ICLASS_JBE:
+    case XED_ICLASS_JCXZ:
+    case XED_ICLASS_JECXZ:
+    case XED_ICLASS_JL:
+    case XED_ICLASS_JLE:
+    case XED_ICLASS_JNB:
+    case XED_ICLASS_JNBE:
+    case XED_ICLASS_JNL:
+    case XED_ICLASS_JNLE:
+    case XED_ICLASS_JNO:
+    case XED_ICLASS_JNP:
+    case XED_ICLASS_JNS:
+    case XED_ICLASS_JNZ:
+    case XED_ICLASS_JO:
+    case XED_ICLASS_JP:
+    case XED_ICLASS_JRCXZ:
+    case XED_ICLASS_JS:
+    case XED_ICLASS_JZ:
+    case XED_ICLASS_XBEGIN:
+         return XED_CATEGORY_COND_BR;
+         break;
+    case XED_ICLASS_CALL_FAR:
+    case XED_ICLASS_CALL_NEAR:
+         return XED_CATEGORY_CALL;
+         break;
+    case XED_ICLASS_RET_FAR:
+    case XED_ICLASS_RET_NEAR:
+         return XED_CATEGORY_RET;
+         break;
+    case XED_ICLASS_MOVSD:
+    case XED_ICLASS_REP_MOVSD:
+    case XED_ICLASS_SCASB:
+    case XED_ICLASS_REPE_SCASB:
+    case XED_ICLASS_REPNE_SCASB:
+    case XED_ICLASS_SCASD:
+    /* TODO list all string iclasses */
+         return XED_CATEGORY_STRINGOP;
+         break;
+    default:
+        break;
+    }
+    return XED_CATEGORY_INVALID; /* iclass does not have special treatment */
+}
+
 void fill_mnemonic_opcode(xed_encoder_request_t* req, parser_state_t *s, char* opcode) {
-    xed_iclass_enum_t iclass = XED_ICLASS_INVALID;
     /* Sometimes prefixes are encoded inside iclass. We've seen all prefixes
       now and can act on them */
     decorate_opcode_mnemonic(opcode, sizeof(opcode), s);
-    iclass =  str2xed_iclass_enum_t(opcode);
+    xed_iclass_enum_t iclass =  str2xed_iclass_enum_t(opcode);
     if (iclass == XED_ICLASS_INVALID) {
         if (s->repne_seen || s->repe_seen || s->lock_seen)
            fprintf(stderr,
@@ -390,4 +443,30 @@ void fill_mnemonic_opcode(xed_encoder_request_t* req, parser_state_t *s, char* o
         exit(1);
     }
     xed_encoder_request_set_iclass(req, iclass);
+
+    s->early_category = early_categorize_iclass(iclass);
 }
+
+void fill_relative_offset_operand(xed_encoder_request_t* req, parser_state_t *s,
+                                  xed_uint64_t value, unsigned orig_bits)
+{
+    if (s->relbr_num > 0) {
+        fprintf(stderr,
+             "[XED CLIENT ERROR] Only one relative branch allowed\n");
+        exit(1);
+    }
+    unsigned width_bits = drag_to_accepted_literal_width(orig_bits);
+
+    xed_encoder_request_set_branch_displacement(
+        req,
+        XED_STATIC_CAST(xed_uint32_t,value),
+        width_bits/8);
+    xed_encoder_request_set_operand_order(req,
+                                          s->operand_index,
+                                          XED_OPERAND_RELBR);
+    xed_encoder_request_set_relbr(req);
+
+    s->relbr_num++;
+    s->operand_index++;
+}
+

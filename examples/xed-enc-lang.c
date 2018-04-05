@@ -57,6 +57,7 @@ parse_intel_syntax_request(ascii_encode_request_t areq)
     xed_encoder_request_t req;
     xed_encoder_request_zero_set_mode(&req,&(areq.dstate));
     parser_state_t s = (parser_state_t){
+                                    .early_category = XED_CATEGORY_INVALID,
                                     .dstate = &areq.dstate,
                                     .operand_index = 0,
                                     .regnum = 0,
