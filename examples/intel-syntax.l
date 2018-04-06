@@ -97,28 +97,30 @@ LOCK { /* To be encoded into iclass */
 
  /* GPRs and RIP */
 {ALLGPR} {
-        yylval.regname = parse_single_register(yytext);
+        yylval.regname = parse_single_register(s, yytext);
         return TOK_GPR;
 }
 
  /* Segment registers */
-{SEG_REG} {yylval.regname = parse_single_register(yytext);
-           return TOK_SEG_REG;
+{SEG_REG} {
+        yylval.regname = parse_single_register(s, yytext);
+        return TOK_SEG_REG;
 }
 
 
  /* x87 FPU regs */
  /* XXX Xed recognizes only lowercase names for x87 registers: st(0) - st(7) */
 
-ST {yylval.regname = parse_single_register("st(0)"); /* Top of stack */
-         return TOK_FPU_REG;
+ST {
+        yylval.regname = parse_single_register(s, "st(0)"); /* Top of stack */
+        return TOK_FPU_REG;
 }
 
  /* Intel SDM variant */
 ST"("[0-7]")" {
         char mangled_name[] = "st(0)";
         mangled_name[3] += yytext[3] - '0';
-        yylval.regname = parse_single_register(mangled_name);
+        yylval.regname = parse_single_register(s, mangled_name);
         return TOK_FPU_REG;
 }
 
@@ -126,13 +128,13 @@ ST"("[0-7]")" {
 ST[0-7] {
         char mangled_name[] = "st(0)";
         mangled_name[3] += yytext[2] - '0';
-        yylval.regname = parse_single_register(mangled_name);
+        yylval.regname = parse_single_register(s, mangled_name);
         return TOK_FPU_REG;
 }
 
  /* MMX registers, XED notation */
 MMX[0-7]+ {
-        yylval.regname = parse_single_register(yytext);
+        yylval.regname = parse_single_register(s, yytext);
         return TOK_MMX_REG;
 }
 
@@ -140,37 +142,37 @@ MMX[0-7]+ {
 MM[0-7]+ {
         char mangled_name[] = "MMX0";
         mangled_name[3] += yytext[2] - '0';
-        yylval.regname = parse_single_register(mangled_name);
+        yylval.regname = parse_single_register(s, mangled_name);
         return TOK_MMX_REG;
 }
 
 
  /* XMM, YMM, ZMM */
 (X|Y|Z)MM[0-9]+ {
-            yylval.regname = parse_single_register(yytext);
+            yylval.regname = parse_single_register(s, yytext);
             return TOK_VEC_REG;
 }
 
  /* Control registers */
 CR[0-9]+ {
-            yylval.regname = parse_single_register(yytext);
+            yylval.regname = parse_single_register(s, yytext);
             return TOK_CONTROL_REG;
 }
 
  /* Debug registers */
 DR[0-9]+ {
-            yylval.regname = parse_single_register(yytext);
+            yylval.regname = parse_single_register(s, yytext);
             return TOK_DEBUG_REG;
 }
 
  /* Bound registers */
 BND[0-9]+ {
-            yylval.regname = parse_single_register(yytext);
+            yylval.regname = parse_single_register(s, yytext);
             return TOK_BOUND_REG;
 }
 
 K[0-7]  {
-            yylval.regname = parse_single_register(yytext);
+            yylval.regname = parse_single_register(s, yytext);
             return TOK_OPMASK_REG;
 }
 

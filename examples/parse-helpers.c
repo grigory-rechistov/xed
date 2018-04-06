@@ -185,13 +185,14 @@ void deduce_operand_width_vector(xed_encoder_request_t* req, parser_state_t *s,
     }
 }
 
-xed_reg_enum_t parse_single_register(const char* txt)
+xed_reg_enum_t parse_single_register(parser_state_t *s, const char* txt)
 {
     xed_reg_enum_t reg = str2xed_reg_enum_t(txt);
     if (reg == XED_REG_INVALID) {
         fprintf(stderr,
              "[XED CLIENT ERROR] Bad register name: %s\n", txt);
-        exit(1);
+        s->error_found = 1;
+        return XED_REG_INVALID;
     }
     return reg;
 }
@@ -204,12 +205,14 @@ void fill_register_operand(xed_encoder_request_t* req, parser_state_t *s, xed_re
     {
         fprintf(stderr,
             "[XED CLIENT ERROR] Cannot use DIL/SPL/BPL/SIL outside of 64b mode\n");
-        exit(1);
+        s->error_found = 1;
+        return;
     }
     if (s->regnum > 8) {
         fprintf(stderr,
               "[XED CLIENT ERROR] Only up to nine register operands allowed\n");
-        exit(1);
+        s->error_found = 1;
+        return;
     }
     // The registers operands are numbered starting from the first one
     // as XED_OPERAND_REG0. We increment regnum (below) every time we
@@ -261,9 +264,10 @@ void fill_memory_operand(xed_encoder_request_t* req, parser_state_t *s)
         xed_encoder_request_set_operand_order(
                 req, s->operand_index, XED_OPERAND_MEM1);
     } else {
-         fprintf(stderr,
-             "[XED CLIENT ERROR] Only up to two memory operands allowed\n");
-         exit(1);
+        fprintf(stderr,
+            "[XED CLIENT ERROR] Only up to two memory operands allowed\n");
+        s->error_found = 1;
+        return;
     }
 
 //    else if (mem_bis.agen) {
@@ -328,16 +332,18 @@ void fill_immediate_operand(xed_encoder_request_t* req, parser_state_t *s,
        if (width_bits != 8) {
            fprintf(stderr, "[XED CLIENT ERROR] The second immediate may only"
                            " be 8 bits wide\n");
-           exit(1);
+           s->error_found = 1;
+           return;
        }
        xed_encoder_request_set_uimm1(req, value);
        xed_encoder_request_set_operand_order(req,
                                              s->operand_index,
                                              XED_OPERAND_IMM1);
    } else {
-       fprintf(stderr,
+        fprintf(stderr,
             "[XED CLIENT ERROR] Only up to two immediate operands allowed\n");
-       exit(1);
+        s->error_found = 1;
+        return;
    }
     s->immed_num++;
     s->operand_index++;
@@ -349,7 +355,8 @@ void fill_far_pointer_operand(xed_encoder_request_t* req, parser_state_t *s,
 {
     if (offset_bits > 32) {
         fprintf(stderr, "[XED CLIENT ERROR] Far pointer offset is too wide\n");
-        exit(1);
+        s->error_found = 1;
+        return;
     }
     offset_bits = offset_bits < 16? 16:32;
 
@@ -366,17 +373,18 @@ void fill_far_pointer_operand(xed_encoder_request_t* req, parser_state_t *s,
     if (s->immed_num != 0) {
         fprintf(stderr, "[XED CLIENT ERROR] Far pointer cannot"
                         " follow immediate operand\n");
-        exit(1);
+        s->error_found = 1;
+        return;
     }
     if (segment_bits > 16) {
-            fprintf(stderr, "[XED CLIENT ERROR] Far pointer"
-                            " segment is too wide\n");
-            exit(1);
+        fprintf(stderr, "[XED CLIENT ERROR] Far pointer"
+                        " segment is too wide\n");
+        s->error_found = 1;
+        return;
     }
     xed_encoder_request_set_uimm0_bits(req, seg_value, 16);
     xed_encoder_request_set_operand_order(req, s->operand_index,
                                           XED_OPERAND_IMM0);
-
     s->immed_num++;
     s->operand_index++;
 }
@@ -463,7 +471,8 @@ void fill_relative_offset_operand(xed_encoder_request_t* req, parser_state_t *s,
     if (s->relbr_num > 0) {
         fprintf(stderr,
              "[XED CLIENT ERROR] Only one relative branch allowed\n");
-        exit(1);
+        s->error_found = 1;
+        return;
     }
     unsigned width_bits = drag_to_accepted_literal_width(orig_bits);
 
