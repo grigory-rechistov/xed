@@ -25,14 +25,6 @@ END_LEGAL */
 #include "xed-util.h"
 #include "parse-helpers.h"
 
-/* TODO implement better error reporting */
-void yyerror(xed_encoder_request_t *req, parser_state_t *state, const char* string)
-{
-    fprintf(stderr, "[XED_CLIENT_ERROR] Scanner parsing error: %s\n", string);
-    state->error_found = 1;
-}
-
-
 static void decorate_opcode_mnemonic(char* opcode, xed_uint_t len,
                                      const parser_state_t *s)
 {

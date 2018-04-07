@@ -1,6 +1,20 @@
 /* Parser for assembly in Intel notation for XED */
-/* TODO: make parser reentrant */
 
+/* Produce reentrant parser */
+%define api.pure full
+
+/* Track locations */
+%locations
+
+%lex-param {void* lexer_state}
+%lex-param {xed_encoder_request_t *req}
+%lex-param {parser_state_t *s}
+
+%parse-param {void* lexer_state}
+%parse-param {xed_encoder_request_t *req}
+%parse-param {parser_state_t *s}
+
+// %define parse.error verbose /* Only works with newer Bison versions */
 %code requires {
 #include <stdbool.h>
 #include "xed-encode.h"
@@ -12,25 +26,28 @@
 # define YYERROR_VERBOSE 1
 #endif
 
-#define YY_DECL int yylex(xed_encoder_request_t *req, parser_state_t *s)
+/* Define scanner function for lexer */
+#define YY_DECL int yylex ( YYSTYPE * yylval_param, YYLTYPE * yylloc_param, \
+      yyscan_t yyscanner, xed_encoder_request_t *req, parser_state_t *s)
 
 } // code requires
-
-%lex-param { xed_encoder_request_t *req}
-%lex-param { parser_state_t *s}
-%parse-param { xed_encoder_request_t *req}
-%parse-param { parser_state_t *s}
-
-// %define parse.error verbose /* Only works with newer Bison versions */
 
 %{
 
 #include <stdio.h>
 #include <stdlib.h>
 #include "xed-encode.h"
+#include "intel-syntax.parser.h"
+#include "intel-syntax.lexer.h"
+
+int yylex (YYSTYPE * yylval_param, YYLTYPE * yylloc_param , yyscan_t yyscanner,
+           xed_encoder_request_t *req, parser_state_t *s);
+static void yyerror(YYLTYPE *locp, void *lexer_state,
+            xed_encoder_request_t *req, parser_state_t *state, const char* msg);
 
 %}
 
+/* Structure to keep tokens' semantic values */
 %union {
     xed_reg_enum_t regname;
     struct {
@@ -38,9 +55,8 @@
         unsigned int width_bits;
     } literal;
 
-    char memwidth;
-    char roundingspec;
-    char opcode_string[100];
+    char roundingspec; // todo remove if unneeded
+    char opcode_string[100]; /* saved here for late mangling */
     char garbage[100];
 }
 
@@ -342,3 +358,18 @@ broadcast_expr: /* empty */
 };
 
 %%
+
+/* TODO implement proper location position */
+static void yyerror(YYLTYPE *locp, void *lexer_state, xed_encoder_request_t *req, parser_state_t *state, const char* msg)
+{
+    if (locp) {
+        fprintf(stderr, "[XED_CLIENT_ERROR] Scanner parsing error:"
+                        " %s (:%d.%d -> :%d.%d)\n",
+                        msg,
+                        locp->first_line, locp->first_column,
+                        locp->last_line,  locp->last_column);
+    } else {
+        fprintf(stderr, "[XED_CLIENT_ERROR] Scanner parsing error: %s\n", msg);
+    }
+    state->error_found = 1;
+}

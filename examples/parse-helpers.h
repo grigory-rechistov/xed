@@ -63,9 +63,6 @@ typedef struct {
     xed_bool_t error_found; /* flag to signal Xed errors to parser function */
 } parser_state_t;
 
-int yylex(xed_encoder_request_t *req, parser_state_t *s);
-void yyerror(xed_encoder_request_t *req, parser_state_t *state, const char* string);
-
 void handle_ambiguous_iclasses(xed_encoder_request_t *req, parser_state_t *s);
 
 void deduce_operand_width_gpr(xed_encoder_request_t* req, parser_state_t *s,

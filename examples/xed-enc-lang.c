@@ -77,9 +77,15 @@ parse_intel_syntax_request(ascii_encode_request_t areq)
     if (upcase_command[len-1] == ' ')
         upcase_command[len-1] = '\0';
 
-    YY_BUFFER_STATE buffer = yy_scan_string(upcase_command);
-    int result = yyparse(&req, &s);
-    yy_delete_buffer(buffer);
+    void* lexer_state;
+    yylex_init (&lexer_state);
+
+    YY_BUFFER_STATE buffer = yy_scan_string(upcase_command, lexer_state);
+    int result = yyparse(lexer_state, &req, &s);
+
+    yy_delete_buffer(buffer, lexer_state);
+    yylex_destroy (lexer_state);
+
     if (result) { // TODO use YYABORT everywhere instead of exit(1) in actions
         xedex_derror("Parsing failed");
         exit(1);
