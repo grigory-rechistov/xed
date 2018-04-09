@@ -17,6 +17,7 @@ extern void yyerror(const char* s);
     char *memwidth;
     char *broadcastspec;
     char *roundingspec;
+    char *garbage;
 }
 
 %token<prefix> TOK_REP_PREF
@@ -49,6 +50,9 @@ extern void yyerror(const char* s);
 %token<broadcastspec> TOK_BCAST
 %token<roundingspec> TOK_ROUNDING
 
+
+%token<garbage> TOK_GARBAGE
+
 %start toplevelexpr
 
 %%
@@ -58,8 +62,7 @@ toplevelexpr:
 ;
 
 line: T_NEWLINE
-    | asmline T_NEWLINE { printf("assembly line\n");}
-
+     | asmline T_NEWLINE { printf("assembly line\n");}
 ;
 
 asmline: TOK_REP_PREF TOK_OPCODE

@@ -8,10 +8,18 @@
 
 int main(int argc, char **argv) {
 
-    yyin = stdin;
-    do {
-        yyparse();
-    } while(!feof(yyin));
+    if (argc >1 ) {
+    char* input = argv[1];
+    YY_BUFFER_STATE buffer = yy_scan_string(input);
+    yyparse();
+    yy_delete_buffer(buffer);
+
+    } else {
+        yyin = stdin;
+        do {
+            yyparse();
+        } while(!feof(yyin));
+    }
     return 0;
 }
 

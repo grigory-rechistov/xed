@@ -62,8 +62,13 @@ byte|([dq]?word) {yylval.memwidth = yytext; return TOK_MEMWIDTH;} /* memory widt
 [a-z][a-z0-9]* {yylval.opcode = yytext; return TOK_OPCODE;} /* this rule must be the last one as it matches all words */
 
 
-\n        {return T_NEWLINE;} /* TODO is it needed? */
+\n        {return T_NEWLINE;}
+<<EOF>>   {static int once = 0;
+           return once++? 0: T_NEWLINE;} /* Hack to turn the first EOF into newline */
 
+;        {yylval.garbage = yytext;
+           printf("flex garbage: %s\n", yytext);
+           return TOK_GARBAGE;} /* rule for unmatched input */
 
 %%
 
