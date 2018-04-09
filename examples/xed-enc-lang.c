@@ -86,7 +86,17 @@ parse_intel_syntax_request(ascii_encode_request_t areq)
     yy_delete_buffer(buffer, lexer_state);
     yylex_destroy (lexer_state);
 
-    if (result) { // TODO use YYABORT everywhere instead of exit(1) in actions
+    if (result != 0) {
+        if (s.error_position) {
+            /* Mark the first unparsed symbol in the input string */
+            fprintf(stderr, "input: %s\n", areq.command);
+            fprintf(stderr, "error: ");
+            for (unsigned i = 1; i < s.error_position; i++) {
+                fprintf(stderr, " ");
+            }
+            fprintf(stderr, "^\n");
+        }
+
         xedex_derror("Parsing failed");
         exit(1);
     }

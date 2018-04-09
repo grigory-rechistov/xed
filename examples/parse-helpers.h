@@ -48,7 +48,7 @@ typedef struct {
     /* Literal displacement */
     xed_bool_t disp_valid;
     xed_int64_t disp_val;
-    unsigned int disp_width_bits;
+    unsigned disp_width_bits;
 
     /* Prefixes */
     xed_bool_t repe_seen;
@@ -61,6 +61,7 @@ typedef struct {
     xed_bool_t seen_far_ptr;
 
     xed_bool_t error_found; /* flag to signal Xed errors to parser function */
+    unsigned error_position; /* set when error is detected by lexer or parser */
 } parser_state_t;
 
 void handle_ambiguous_iclasses(xed_encoder_request_t *req, parser_state_t *s);
