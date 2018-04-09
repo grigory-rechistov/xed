@@ -56,10 +56,11 @@ void yyerror(xed_encoder_request_t *req, parser_state_t *state, const char* str)
 %token TOK_REPNE_PREF
 %token TOK_LOCK_PREF
 
-%token TOK_VEC_REG
-%token TOK_MASK_REG
-%token TOK_SEG_REG
-%token TOK_FPU_REG
+%token<regname> TOK_VEC_REG
+%token<regname> TOK_MASK_REG
+%token<regname> TOK_SEG_REG
+%token<regname> TOK_FPU_REG
+%token<regname> TOK_MMX_REG
 
 %token TOK_CONSTANT
 %token TOK_MEMWIDTH
@@ -179,7 +180,11 @@ register: TOK_GPR {
 }
 ;
 
-vector_register: TOK_VEC_REG
+vector_register: TOK_VEC_REG {
+        xed_reg_enum_t reg_name = $1;
+        printf("TODO add the rest of vector register logic \n");
+        deduce_operand_width_vector(req, s, reg_name);
+}
 ;
 
 immediate: TOK_CONSTANT // all types of literals

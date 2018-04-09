@@ -78,25 +78,36 @@ REPNE|REPNZ { xed_encoder_request_set_repne(req);
               s->repne_seen = true;
               return TOK_REPNE_PREF;}
 
-LOCK {
-       /* To be encoded in iclass */
+LOCK { /* To be encoded into iclass */
        s->lock_seen = true;
        return TOK_LOCK_PREF;}
 
-{ALLGPR} { xed_reg_enum_t reg = str2xed_reg_enum_t(yytext);
-           if (reg == XED_REG_INVALID) {
-                fprintf(stderr,
-                        "[XED CLIENT ERROR] Bad register name: %s\n", yytext);
-                exit(1);
-            }
-            yylval.regname = reg;
-            return TOK_GPR;}
+ /* GPRs and RIP */
+{ALLGPR} {
+        yylval.regname = parse_single_register(yytext);
+        return TOK_GPR;
+}
 
-{SEG_REG} {DUP_YYTEXT(); return TOK_SEG_REG;} /* Segment registers */
+ /* Segment registers */
+{SEG_REG} {yylval.regname = parse_single_register(yytext);
+           return TOK_SEG_REG;
+}
 
-ST[0-7] {DUP_YYTEXT(); return TOK_FPU_REG;} /* x87 FPU regs */
-(X|Y|Z)?MM[0-9]+ {DUP_YYTEXT(); return TOK_VEC_REG;} /* MMX, XMM, YMM, ZMM TODO limit number range */
+ /* x87 FPU regs */
+ST[0-7] {yylval.regname = parse_single_register(yytext);
+         return TOK_FPU_REG;
+ }
 
+ /* MMX registers */
+MM[0-7]+ {yylval.regname = parse_single_register(yytext);
+          return TOK_MMX_REG;
+}
+
+ /* XMM, YMM, ZMM TODO limit number range */
+(X|Y|Z)MM[0-9]+ {
+            yylval.regname = parse_single_register(yytext);
+            return TOK_VEC_REG;
+}
 
 K[0-7] {DUP_YYTEXT(); return TOK_MASK_REG;} /* opmask registers */
 "{Z}" {return TOK_ZEROING;} /* vector mask zeroing specifier */
