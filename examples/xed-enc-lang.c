@@ -71,11 +71,6 @@ parse_intel_syntax_request(ascii_encode_request_t areq)
     char upcase_command[5000];
     xed_strncpy(upcase_command, areq.command, sizeof(upcase_command) -1);
     upcase(upcase_command);
-    /* Concatenation of argv[] adds an extra space at the end,
-     * remove it */
-    size_t len = xed_strlen(upcase_command);
-    if (upcase_command[len-1] == ' ')
-        upcase_command[len-1] = '\0';
 
     void* lexer_state;
     yylex_init (&lexer_state);
