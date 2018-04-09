@@ -79,7 +79,7 @@ REPNE|REPNZ { xed_encoder_request_set_repne(req);
               s->repne_seen = true;
               return TOK_REPNE_PREF;}
 
-LOCK { printf("FIXME lock prefix not handled\n");
+LOCK {
        /* To be encoded in iclass */
        s->lock_seen = true;
        return TOK_LOCK_PREF;}
@@ -128,6 +128,8 @@ BYTE|([DQ]?WORD) {DUP_YYTEXT(); return TOK_MEMWIDTH;} /* memory width specifier 
 
 
 \n        {return T_NEWLINE;}
+
+ /* Remains of multi-line lexer */
 <<EOF>>   {static int once = 0;
            return once++? 0: T_NEWLINE;} /* Hack to turn the first EOF into newline */
 

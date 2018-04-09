@@ -96,7 +96,6 @@ line: T_NEWLINE
      | asmline T_NEWLINE { printf("assembly line\n");}
 ;
 
-/* TODO add handling of single byte prefixes */
 asmline: prefixes opcode operands
 ;
 
@@ -161,6 +160,7 @@ register: TOK_GPR {
         xed_operand_enum_t reg_pos = XED_CAST(xed_operand_enum_t,
                                                 XED_OPERAND_REG0 + s->regnum);
         
+        /* TODO check for overflow for number of register operands */
         // store the register identifier in the operand storage field
         xed_encoder_request_set_reg(req, reg_pos, reg_name);
         
