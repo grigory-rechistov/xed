@@ -89,6 +89,7 @@ void yyerror(xed_encoder_request_t *req, parser_state_t *state, const char* str)
 
 %%
 
+ /* TODO simplify, remove multi-line support */ 
 toplevelexpr:
     | toplevelexpr line
 ;
