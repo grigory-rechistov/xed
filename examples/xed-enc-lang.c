@@ -84,7 +84,6 @@ parse_encode_request(ascii_encode_request_t areq)
 
     YY_BUFFER_STATE buffer = yy_scan_string(upcase_command);
     yydebug = 1; // TODO remove
-    //yy_flex_debug = 1; // TODO remove
     yyparse(&req, &s);
     yy_delete_buffer(buffer);
 
@@ -147,7 +146,7 @@ static void immed_parser_init(immed_parser_t* self,
             else if (i == 1) {
                 self->immed_val = convert_ascii_hex_to_int(p->s);
                 // nibbles to bits
-                self->width_bits = XED_CAST(unsigned int,strlen(p->s)*4);
+                self->width_bits = XED_CAST(unsigned int, strlen(p->s)*4);
                 self->valid = 1;
             }
         }
