@@ -220,8 +220,8 @@ bound operands
 mem_expr: indirect_addr_gpr
         | indirect_addr_gpr_plus_offset
         | TOK_GPR TOK_PLUS TOK_GPR /* GPR + GPR (16-bit specific) */
-        | TOK_GPR TOK_PLUS TOK_GPR TOK_MULTI TOK_CONSTANT /* Base + Index GPR * Scale */
-        | TOK_GPR TOK_PLUS TOK_GPR TOK_MULTI TOK_CONSTANT TOK_PLUS TOK_CONSTANT /* Base + Index GPR * Scale + constant */
+        | base_index_scale
+        | base_index_scale_disp
         | vsib_mem_expr
 ;
 
@@ -244,6 +244,33 @@ indirect_addr_gpr_plus_offset: TOK_GPR TOK_PLUS TOK_CONSTANT {
      s->disp_width_bits = $3.width_bits;
 
 }; 
+
+ /* Base + Index GPR * Scale */
+base_index_scale: TOK_GPR TOK_PLUS TOK_GPR TOK_MULTI TOK_CONSTANT {
+     s->base_reg = $1;
+     s->index_reg = $3;
+     s->scale_val = $5.value;
+     /* TODO: accept only valid numerical scale factors? */
+};
+
+ /* Base + Index GPR * Scale +/- constant */
+base_index_scale_disp: TOK_GPR TOK_PLUS TOK_GPR TOK_MULTI TOK_CONSTANT TOK_PLUS TOK_CONSTANT {
+     s->base_reg = $1;
+     s->index_reg = $3;
+     s->scale_val = $5.value;
+     s->disp_valid = 1;
+     s->disp_val = $7.value;
+     s->disp_width_bits = $7.width_bits;
+}
+                     | TOK_GPR TOK_PLUS TOK_GPR TOK_MULTI TOK_CONSTANT TOK_MINUS TOK_CONSTANT {
+     s->base_reg = $1;
+     s->index_reg = $3;
+     s->scale_val = $5.value;
+     s->disp_valid = 1;
+     s->disp_val = XED_CAST(xed_uint64_t, -$7.value); /* Use negative constant */
+     s->disp_width_bits = $7.width_bits;
+};
+
 
 vsib_mem_expr:
         | TOK_GPR TOK_PLUS TOK_VEC_REG TOK_MULTI TOK_CONSTANT /* Base + Index Vector * Scale */
