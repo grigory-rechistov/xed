@@ -350,15 +350,35 @@ base_index_scale_disp: TOK_GPR TOK_PLUS TOK_GPR TOK_MULTI TOK_CONSTANT TOK_PLUS 
 };
 
 
- /* TODO implement VSIB */
-vsib_mem_expr: | TOK_GPR TOK_PLUS TOK_VEC_REG TOK_MULTI TOK_CONSTANT {/* Base + Index Vector * Scale */
-        printf("TODO VSIB not implemented\n");
+vsib_mem_expr: base_vec_index_scale
+             | base_vec_index_scale_disp
+;
+
+base_vec_index_scale: TOK_GPR TOK_PLUS TOK_VEC_REG TOK_MULTI TOK_CONSTANT {
+        s->base_reg = $1;
+        s->index_reg = $3;
+        s->scale_val = $5.value;
+        HANDLE_ERROR;
+};
+
+base_vec_index_scale_disp: TOK_GPR TOK_PLUS TOK_VEC_REG TOK_MULTI TOK_CONSTANT TOK_PLUS TOK_CONSTANT {
+        s->base_reg = $1;
+        s->index_reg = $3;
+        s->scale_val = $5.value;
+        s->disp_valid = 1;
+        s->disp_val = $7.value;
+        s->disp_width_bits = $7.width_bits;
         HANDLE_ERROR;
 }
-               | TOK_GPR TOK_PLUS TOK_VEC_REG TOK_MULTI TOK_CONSTANT TOK_PLUS TOK_CONSTANT /* Base + Index Vector * Scale + constant */ {
-        printf("TODO VSIB not implemented\n");
+                         | TOK_GPR TOK_PLUS TOK_VEC_REG TOK_MULTI TOK_CONSTANT TOK_MINUS TOK_CONSTANT {
+        s->base_reg = $1;
+        s->index_reg = $3;
+        s->scale_val = $5.value;
+        s->disp_valid = 1;
+        s->disp_val = XED_CAST(xed_uint64_t, -$7.value); /* Use negative constant */
+        s->disp_width_bits = $7.width_bits;
         HANDLE_ERROR;
-}; // TODO case with TOK_MINUS constant
+};
 
 vec_register_filtered: vec_register_masked
                      | vec_register_masked_zeroed
