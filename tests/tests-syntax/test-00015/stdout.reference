@@ -1,0 +1,5 @@
+Request: FDIV MODE:1, REG0:st(0), SMODE:1
+OPERAND ORDER: REG0 
+Could not encode: fdiv st 
+Error code was: GENERAL_ERROR
+[XED CLIENT ERROR] Dying

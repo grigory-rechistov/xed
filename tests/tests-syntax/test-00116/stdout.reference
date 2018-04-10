@@ -1,0 +1,4 @@
+Request: JMP BRDISP_WIDTH:32, MODE:1, RELBR:0xbc4ff2, SMODE:1
+OPERAND ORDER: RELBR 
+Encodable! E9F24FBC00
+.byte 0xe9,0xf2,0x4f,0xbc,0x00

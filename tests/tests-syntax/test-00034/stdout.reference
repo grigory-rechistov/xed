@@ -1,0 +1,4 @@
+Request: MOV EOSZ:1, REG0:AX, REG1:DX, SMODE:1
+OPERAND ORDER: REG0 REG1 
+Encodable! 89D0
+.byte 0x89,0xd0

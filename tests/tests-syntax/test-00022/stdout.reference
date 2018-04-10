@@ -1,0 +1,4 @@
+Request: FDIV MODE:1, REG0:st(0), REG1:st(4), SMODE:1
+OPERAND ORDER: REG0 REG1 
+Encodable! D8F4
+.byte 0xd8,0xf4

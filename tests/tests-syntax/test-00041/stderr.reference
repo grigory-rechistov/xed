@@ -1,0 +1,4 @@
+[XED CLIENT ERROR] Bad instruction name: 'REP_CMPSB'
+input: rep_cmpsb 
+error:          ^
+

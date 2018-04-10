@@ -1,0 +1,4 @@
+Request: INC DISP_WIDTH:8, EASZ:2, MEM0:dword ptr [EAX+0x40], MEM_WIDTH:4, MODE:2, SMODE:2
+OPERAND ORDER: MEM0 
+Encodable! 67FF4040
+.byte 0x67,0xff,0x40,0x40

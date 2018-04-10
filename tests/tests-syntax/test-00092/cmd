@@ -1,0 +1,1 @@
+BUILDDIR/xed -E movsd xmm0, qword ptr [ebx]

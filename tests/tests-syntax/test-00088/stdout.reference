@@ -1,0 +1,5 @@
+Request: MOVSD_XMM EASZ:2, MEM0:xmmword ptr [EBX], MEM_WIDTH:16, MODE:2, REG0:XMM0, SMODE:2
+OPERAND ORDER: REG0 MEM0 
+Could not encode: movsd xmm0, xmmword ptr [ebx] 
+Error code was: GENERAL_ERROR
+[XED CLIENT ERROR] Dying

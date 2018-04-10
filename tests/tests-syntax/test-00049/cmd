@@ -1,0 +1,1 @@
+BUILDDIR/xed -E lock repne cmpsb

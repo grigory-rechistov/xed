@@ -1,0 +1,5 @@
+Request: XSAVE EASZ:2, MEM0:byte ptr [EBX], MEM_WIDTH:1, MODE:2, SMODE:2
+OPERAND ORDER: MEM0 
+Could not encode: xsave byte ptr [ebx] 
+Error code was: GENERAL_ERROR
+[XED CLIENT ERROR] Dying

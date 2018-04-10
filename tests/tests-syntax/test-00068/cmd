@@ -1,0 +1,1 @@
+BUILDDIR/xed -64 -E inc dword ptr [eax + ebx*2]

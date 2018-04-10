@@ -1,0 +1,5 @@
+Request: JMP BRDISP_WIDTH:16, MODE:1, RELBR:0x4d2, SMODE:1
+OPERAND ORDER: RELBR 
+Could not encode: jmp 1234 
+Error code was: GENERAL_ERROR
+[XED CLIENT ERROR] Dying

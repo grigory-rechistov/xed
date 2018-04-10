@@ -1,0 +1,3 @@
+Request: INT3 MODE:1, SMODE:1
+Encodable! CC
+.byte 0xcc

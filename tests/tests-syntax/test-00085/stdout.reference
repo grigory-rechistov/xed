@@ -1,0 +1,5 @@
+Request: MOV_CR EOSZ:2, MODE:2, REG0:CR0, REG1:EBX, SMODE:2
+OPERAND ORDER: REG0 REG1 
+Could not encode: mov cr0, ebx 
+Error code was: GENERAL_ERROR
+[XED CLIENT ERROR] Dying

@@ -1,0 +1,1 @@
+BUILDDIR/xed -E call far qword ptr [ebx]

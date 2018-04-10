@@ -1,0 +1,4 @@
+Request: CALL_NEAR EASZ:2, MEM0:dword ptr [EBX], MEM_WIDTH:4, MODE:1, SMODE:1
+OPERAND ORDER: MEM0 
+Encodable! FF13
+.byte 0xff,0x13

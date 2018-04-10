@@ -1,0 +1,1 @@
+BUILDDIR/xed -E lock add dword ptr [edx], eax

@@ -1,0 +1,4 @@
+[XED CLIENT ERROR] Bad instruction name or incompatible prefixes: 'XCHG_LOCK'
+input: lock xchg eax, dword ptr [edx] 
+error:           ^
+

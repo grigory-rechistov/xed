@@ -1,0 +1,5 @@
+Request: MOV EASZ:2, EOSZ:2, MEM0:byte ptr [EBX], MEM_WIDTH:1, MODE:1, REG0:EAX, SMODE:1
+OPERAND ORDER: REG0 MEM0 
+Could not encode: mov eax, byte ptr [ebx] 
+Error code was: GENERAL_ERROR
+[XED CLIENT ERROR] Dying

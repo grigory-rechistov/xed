@@ -1,0 +1,1 @@
+BUILDDIR/xed -E mov eax, word ptr [ebx]

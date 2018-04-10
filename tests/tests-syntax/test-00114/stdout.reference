@@ -1,0 +1,4 @@
+Request: JNBE BRDISP_WIDTH:8, MODE:1, RELBR:0xfffffffc, SMODE:1
+OPERAND ORDER: RELBR 
+Encodable! 77FC
+.byte 0x77,0xfc

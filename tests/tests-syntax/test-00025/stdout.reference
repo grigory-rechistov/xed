@@ -1,0 +1,5 @@
+Request: CVTPI2PD MODE:1, REG0:XMM4, REG1:XMM5, SMODE:1
+OPERAND ORDER: REG0 REG1 
+Could not encode: cvtpi2pd xmm4, xmm5 
+Error code was: GENERAL_ERROR
+[XED CLIENT ERROR] Dying

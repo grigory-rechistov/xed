@@ -1,0 +1,1 @@
+BUILDDIR/xed -E mov eax, 0x12345

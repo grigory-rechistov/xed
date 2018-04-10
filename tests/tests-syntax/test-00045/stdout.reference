@@ -1,0 +1,3 @@
+Request: REPNE_CMPSB MODE:1, SMODE:1
+Encodable! F2A6
+.byte 0xf2,0xa6

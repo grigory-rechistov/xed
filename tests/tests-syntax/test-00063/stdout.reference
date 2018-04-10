@@ -1,0 +1,5 @@
+Request: INC DISP_WIDTH:16, EASZ:2, MEM0:dword ptr [EAX+0x654], MEM_WIDTH:4, MODE:2, SMODE:2
+OPERAND ORDER: MEM0 
+Could not encode: inc dword ptr [eax + 0x654] 
+Error code was: GENERAL_ERROR
+[XED CLIENT ERROR] Dying

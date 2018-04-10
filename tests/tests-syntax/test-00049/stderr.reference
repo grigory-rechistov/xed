@@ -1,0 +1,4 @@
+[XED_CLIENT_ERROR] Scanner parsing error: syntax error (symbols [6:11])
+input: lock repne cmpsb 
+error:      ^
+

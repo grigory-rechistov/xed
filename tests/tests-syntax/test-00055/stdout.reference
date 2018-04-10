@@ -1,0 +1,5 @@
+Request: INC EASZ:2, MEM0:word ptr [EAX], MEM_WIDTH:2, MODE:1, SMODE:1
+OPERAND ORDER: MEM0 
+Could not encode: inc word ptr [eax] 
+Error code was: GENERAL_ERROR
+[XED CLIENT ERROR] Dying

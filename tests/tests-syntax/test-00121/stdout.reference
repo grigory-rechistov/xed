@@ -1,0 +1,4 @@
+Request: JMP EASZ:2, MEM0:dword ptr [EAX], MEM_WIDTH:4, MODE:1, SMODE:1
+OPERAND ORDER: MEM0 
+Encodable! FF20
+.byte 0xff,0x20

@@ -1,0 +1,1 @@
+BUILDDIR/xed -E jmp far 12:12341234

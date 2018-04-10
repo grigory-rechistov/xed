@@ -1,0 +1,5 @@
+Request: CALL_NEAR EASZ:2, MEM0:word ptr [EBX], MEM_WIDTH:2, MODE:1, SMODE:1
+OPERAND ORDER: MEM0 
+Could not encode: call_near word ptr [ebx] 
+Error code was: GENERAL_ERROR
+[XED CLIENT ERROR] Dying
