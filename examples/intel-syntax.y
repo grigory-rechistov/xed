@@ -30,12 +30,13 @@
 #define YY_DECL int yylex ( YYSTYPE * yylval_param, YYLTYPE * yylloc_param, \
       yyscan_t yyscanner, xed_encoder_request_t *req, parser_state_t *s)
 
-/* Epilogue for every non-empty action that might signal an error in functions
-   that it calls. Used for location tracking */
-#define HANDLE_ERROR if (s->error_found) { \
-                            s->error_position = yylloc.first_column; \
-                            YYABORT; \
-                        };
+/* Epilogue for every non-empty action that might signal a parsing error 
+   in functions that it calls. Used for location tracking.
+   loc points to the first bad token, typically @1 */
+#define HANDLE_ERROR(loc) if (s->error_found) { \
+                              s->error_position = loc.first_column; \
+                              YYABORT; \
+                          }
 
 } // code requires
 
@@ -122,12 +123,12 @@ prefixes: /* empty */
 
 opcode: TOK_OPCODE {
         fill_mnemonic_opcode(req, s, $1, sizeof($1));
-        HANDLE_ERROR;
+        HANDLE_ERROR(@1);
 }
       | TOK_OPCODE TOK_FAR { /* far call/ret/jmp */
         fill_mnemonic_opcode(req, s, $1, sizeof($1));
         s->seen_far_ptr = true;
-        HANDLE_ERROR;
+        HANDLE_ERROR(@1);
 };
 
 operands: /* no operands */
@@ -154,44 +155,44 @@ operand:  general_purpose_register
 
 general_purpose_register: TOK_GPR {
         fill_register_operand(req, s, $1);
-        HANDLE_ERROR;
+        HANDLE_ERROR(@1);
 };
 
 vector_register: TOK_VEC_REG {
         fill_register_operand(req, s, $1);
         deduce_operand_width_vector(req, s, $1);
-        HANDLE_ERROR;
+        HANDLE_ERROR(@1);
 };
 
 control_register: TOK_CONTROL_REG {
         fill_register_operand(req, s, $1);
         s->seen_cr = true;
-        HANDLE_ERROR;
+        HANDLE_ERROR(@1);
 };
 
 debug_register: TOK_DEBUG_REG {
         fill_register_operand(req, s, $1);
         s->seen_dr = true;
-        HANDLE_ERROR;
+        HANDLE_ERROR(@1);
 };
 
 bound_register: TOK_BOUND_REG {
         fill_register_operand(req, s, $1);
-        HANDLE_ERROR;
+        HANDLE_ERROR(@1);
 };
 
 fpu_or_mmx_register: TOK_FPU_REG {
         fill_register_operand(req, s, $1);
-        HANDLE_ERROR;
+        HANDLE_ERROR(@1);
 }
                    | TOK_MMX_REG {
         fill_register_operand(req, s, $1);
-        HANDLE_ERROR;
+        HANDLE_ERROR(@1);
 };
 
 opmask_register: TOK_OPMASK_REG {
         fill_register_operand(req, s, $1);
-        HANDLE_ERROR;
+        HANDLE_ERROR(@1);
 };
 
  /* Either immediate or relative branch displacement */
@@ -200,7 +201,7 @@ literal_const: TOK_CONSTANT {
             fill_relative_offset_operand(req, s, $1.value, $1.width_bits);
         else
             fill_immediate_operand(req, s, $1.value, $1.width_bits);
-        HANDLE_ERROR;
+        HANDLE_ERROR(@1);
 };
 
 signed_literal: TOK_MINUS TOK_CONSTANT {
@@ -208,31 +209,31 @@ signed_literal: TOK_MINUS TOK_CONSTANT {
             fill_relative_offset_operand(req, s, -$2.value, $2.width_bits);
         else
             fill_immediate_operand(req, s, -$2.value, $2.width_bits);
-        HANDLE_ERROR;
+        HANDLE_ERROR(@1);
 }
               | TOK_PLUS TOK_CONSTANT {
         if (instr_category_uses_rel_branch(s->early_category))
             fill_relative_offset_operand(req, s, +$2.value, $2.width_bits);
         else
             fill_immediate_operand(req, s, +$2.value, $2.width_bits);
-        HANDLE_ERROR;
+        HANDLE_ERROR(@1);
 };
 
 far_pointer: TOK_CONSTANT TOK_COLON TOK_CONSTANT {
        fill_far_pointer_operand(req, s, $1.value, $1.width_bits, $3.value, $3.width_bits);
        s->seen_far_ptr = true;
-       HANDLE_ERROR;
+       HANDLE_ERROR(@1);
 }
           | TOK_CONSTANT TOK_COLON TOK_MINUS TOK_CONSTANT {
        /* Negate the offset */
        fill_far_pointer_operand(req, s, $1.value, $1.width_bits, -$4.value, $4.width_bits);
        s->seen_far_ptr = true;
-       HANDLE_ERROR;
+       HANDLE_ERROR(@1);
 };
 
 lea_spec: TOK_LSQBR agen_expr TOK_RSQBR { /* LEA does not have "mem ptr" */
         fill_agen_operand(req, s);
-        HANDLE_ERROR;
+        HANDLE_ERROR(@2);
 };
 
 mem_spec:  segment_override_mem_spec
@@ -241,18 +242,18 @@ mem_spec:  segment_override_mem_spec
 
 segment_override_mem_spec: TOK_MEMWIDTH segment_override TOK_LSQBR mem_expr TOK_RSQBR broadcast_expr {
         fill_memory_operand(req, s);
-        HANDLE_ERROR;
+        HANDLE_ERROR(@4);
 };
 
 default_segment_mem_spec: TOK_MEMWIDTH TOK_LSQBR mem_expr TOK_RSQBR broadcast_expr {
         fill_memory_operand(req, s);
-        HANDLE_ERROR;
+        HANDLE_ERROR(@3);
 };
 
 segment_override: TOK_SEG_REG TOK_COLON {
     s->segment_reg = $1;
     // TODO s->segno ++;
-    HANDLE_ERROR;
+    HANDLE_ERROR(@1);
 };
 
 
@@ -293,7 +294,7 @@ mem_expr: indirect_addr_gpr
 /* single indirect GPR */
 indirect_addr_gpr: TOK_GPR {
         s->base_reg = $1;
-        HANDLE_ERROR;
+        HANDLE_ERROR(@1);
 };
 
 /* GPR +/- const offset */
@@ -302,14 +303,14 @@ indirect_addr_gpr_plus_offset: TOK_GPR TOK_PLUS TOK_CONSTANT {
         s->disp_valid = 1;
         s->disp_val = $3.value;
         s->disp_width_bits = $3.width_bits;
-        HANDLE_ERROR;
+        HANDLE_ERROR(@1);
 }
                             | TOK_GPR TOK_MINUS TOK_CONSTANT {
         s->base_reg = $1;
         s->disp_valid = 1;
         s->disp_val = XED_CAST(xed_uint64_t, -$3.value); /* Use negative constant */
         s->disp_width_bits = $3.width_bits;
-        HANDLE_ERROR;
+        HANDLE_ERROR(@1);
 
 };
 
@@ -317,7 +318,7 @@ indirect_addr_gpr_plus_offset: TOK_GPR TOK_PLUS TOK_CONSTANT {
 bx_bp_si_di: TOK_GPR TOK_PLUS TOK_GPR {
         s->base_reg = $1;
         s->index_reg = $3;
-        HANDLE_ERROR;
+        HANDLE_ERROR(@1);
 };
 
  /* Base + Index GPR * Scale */
@@ -326,7 +327,7 @@ base_index_scale: TOK_GPR TOK_PLUS TOK_GPR TOK_MULTI TOK_CONSTANT {
         s->index_reg = $3;
         s->scale_val = $5.value;
         /* TODO: accept only valid numerical scale factors? */
-        HANDLE_ERROR;
+        HANDLE_ERROR(@1);
 };
 
  /* Base + Index GPR * Scale +/- constant */
@@ -337,7 +338,7 @@ base_index_scale_disp: TOK_GPR TOK_PLUS TOK_GPR TOK_MULTI TOK_CONSTANT TOK_PLUS 
         s->disp_valid = 1;
         s->disp_val = $7.value;
         s->disp_width_bits = $7.width_bits;
-        HANDLE_ERROR;
+        HANDLE_ERROR(@1);
 }
                      | TOK_GPR TOK_PLUS TOK_GPR TOK_MULTI TOK_CONSTANT TOK_MINUS TOK_CONSTANT {
         s->base_reg = $1;
@@ -346,7 +347,7 @@ base_index_scale_disp: TOK_GPR TOK_PLUS TOK_GPR TOK_MULTI TOK_CONSTANT TOK_PLUS 
         s->disp_valid = 1;
         s->disp_val = XED_CAST(xed_uint64_t, -$7.value); /* Use negative constant */
         s->disp_width_bits = $7.width_bits;
-        HANDLE_ERROR;
+        HANDLE_ERROR(@1);
 };
 
 
@@ -358,7 +359,7 @@ base_vec_index_scale: TOK_GPR TOK_PLUS TOK_VEC_REG TOK_MULTI TOK_CONSTANT {
         s->base_reg = $1;
         s->index_reg = $3;
         s->scale_val = $5.value;
-        HANDLE_ERROR;
+        HANDLE_ERROR(@1);
 };
 
 base_vec_index_scale_disp: TOK_GPR TOK_PLUS TOK_VEC_REG TOK_MULTI TOK_CONSTANT TOK_PLUS TOK_CONSTANT {
@@ -368,7 +369,7 @@ base_vec_index_scale_disp: TOK_GPR TOK_PLUS TOK_VEC_REG TOK_MULTI TOK_CONSTANT T
         s->disp_valid = 1;
         s->disp_val = $7.value;
         s->disp_width_bits = $7.width_bits;
-        HANDLE_ERROR;
+        HANDLE_ERROR(@1);
 }
                          | TOK_GPR TOK_PLUS TOK_VEC_REG TOK_MULTI TOK_CONSTANT TOK_MINUS TOK_CONSTANT {
         s->base_reg = $1;
@@ -377,7 +378,7 @@ base_vec_index_scale_disp: TOK_GPR TOK_PLUS TOK_VEC_REG TOK_MULTI TOK_CONSTANT T
         s->disp_valid = 1;
         s->disp_val = XED_CAST(xed_uint64_t, -$7.value); /* Use negative constant */
         s->disp_width_bits = $7.width_bits;
-        HANDLE_ERROR;
+        HANDLE_ERROR(@1);
 };
 
 vec_register_filtered: vec_register_masked
@@ -390,7 +391,7 @@ vec_register_masked: TOK_VEC_REG TOK_LCUBR TOK_OPMASK_REG TOK_RCUBR {
         fill_register_operand(req, s, $1); // main register
         deduce_operand_width_vector(req, s, $1);
         fill_register_operand(req, s, $3); // opmask register
-        HANDLE_ERROR;
+        HANDLE_ERROR(@1); // TODO seaprate the action into two to improve location tracking
 };
 
  /* zmm30 {k3} {z} */
@@ -400,14 +401,14 @@ vec_register_masked_zeroed: TOK_VEC_REG TOK_LCUBR TOK_OPMASK_REG TOK_RCUBR TOK_Z
         deduce_operand_width_vector(req, s, $1);
         fill_register_operand(req, s, $3); // opmask register
         xed3_set_generic_operand(req, XED_OPERAND_ZEROING, 1);
-        HANDLE_ERROR;
+        HANDLE_ERROR(@1); // TODO seaprate the action into two to improve location tracking
 };
 
  /* 1toX memory broadcast */
 broadcast_expr: /* empty */
               | TOK_BCAST {
         xed3_set_generic_operand(req, XED_OPERAND_BCAST, 1);
-        HANDLE_ERROR;
+        HANDLE_ERROR(@1);
 };
 
 %%
