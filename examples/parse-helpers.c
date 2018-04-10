@@ -244,6 +244,7 @@ void fill_memory_operand(xed_encoder_request_t* req, parser_state_t *s)
     xed_reg_class_enum_t rc = XED_REG_CLASS_INVALID;
     xed_reg_class_enum_t rci = XED_REG_CLASS_INVALID;
 
+
     if (s->memop == 0) {
          // Tell XED that we have a memory operand
          xed_encoder_request_set_mem0(req);
@@ -261,15 +262,6 @@ void fill_memory_operand(xed_encoder_request_t* req, parser_state_t *s)
         s->error_found = 1;
         return;
     }
-
-//    else if (mem_bis.agen) {
-//        // Tell XED we have an AGEN
-//        xed_encoder_request_set_agen(&req);
-//        // The AGEN is the next operand
-//        xed_encoder_request_set_operand_order(
-//            &req,operand_index, XED_OPERAND_AGEN);
-//    }
-
 
     rc = xed_gpr_reg_class(s->base_reg);
     rci = xed_gpr_reg_class(s->index_reg);
@@ -302,6 +294,54 @@ void fill_memory_operand(xed_encoder_request_t* req, parser_state_t *s)
     }
 
     s->memop++;
+    s->operand_index++;
+}
+
+
+void fill_agen_operand(xed_encoder_request_t* req, parser_state_t *s)
+{
+    /* People confuse AGEN and MEM syntax easily, warn them */
+    if (xed3_operand_get_iclass(req) != XED_ICLASS_LEA) {
+        printf("AGEN operand is only expected for LEA."
+               " Are you sure you did not omit \"mem ptr\" specifier?\n");
+    }
+
+    xed_reg_class_enum_t rc = XED_REG_CLASS_INVALID;
+    xed_reg_class_enum_t rci = XED_REG_CLASS_INVALID;
+
+    // Tell XED we have an AGEN
+    xed_encoder_request_set_agen(req);
+    // The AGEN is the next operand
+    xed_encoder_request_set_operand_order(
+                req, s->operand_index, XED_OPERAND_AGEN);
+
+    rc = xed_gpr_reg_class(s->base_reg);
+    rci = xed_gpr_reg_class(s->index_reg);
+
+    if (s->base_reg == XED_REG_EIP)
+        xed_encoder_request_set_effective_address_size(req, 32);
+    else if (rc == XED_REG_CLASS_GPR32 || rci == XED_REG_CLASS_GPR32)
+        xed_encoder_request_set_effective_address_size(req, 32);
+    else if (rc == XED_REG_CLASS_GPR16 || rci == XED_REG_CLASS_GPR16)
+        xed_encoder_request_set_effective_address_size(req, 16);
+
+    // fill in the memory fields collected by parser
+    xed_encoder_request_set_base0(req, s->base_reg);
+    xed_encoder_request_set_index(req, s->index_reg);
+    xed_encoder_request_set_scale(req, s->scale_val);
+    xed_encoder_request_set_seg0(req,  s->segment_reg);
+
+    if (s->memory_operand_bytes)
+        xed_encoder_request_set_memory_operand_length(
+            req,
+            s->memory_operand_bytes);
+    if (s->disp_valid) {
+        unsigned int width_bytes =
+                        drag_to_accepted_literal_width(s->disp_width_bits)/8;
+        xed_encoder_request_set_memory_displacement(req, s->disp_val,
+                                                    width_bytes);
+    }
+
     s->operand_index++;
 }
 

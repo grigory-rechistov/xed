@@ -230,16 +230,9 @@ far_pointer: TOK_CONSTANT TOK_COLON TOK_CONSTANT {
        HANDLE_ERROR;
 };
 
-lea_spec: TOK_LSQBR mem_expr TOK_RSQBR {  /* LEA does not use "mem ptr" */
-    printf("TODO lea_spec\n"); 
-    
-    // Tell XED we have an AGEN
-    xed_encoder_request_set_agen(req);
-    // The AGEN is the next operand
-    xed_encoder_request_set_operand_order(
-        req, s->operand_index, XED_OPERAND_AGEN);
-    s->operand_index++;
-    HANDLE_ERROR;
+lea_spec: TOK_LSQBR agen_expr TOK_RSQBR { /* LEA does not have "mem ptr" */
+        fill_agen_operand(req, s);
+        HANDLE_ERROR;
 };
 
 mem_spec:  segment_override_mem_spec
@@ -250,7 +243,7 @@ segment_override_mem_spec: TOK_MEMWIDTH segment_override TOK_LSQBR mem_expr TOK_
         fill_memory_operand(req, s);
         HANDLE_ERROR;
 };
-      
+
 default_segment_mem_spec: TOK_MEMWIDTH TOK_LSQBR mem_expr TOK_RSQBR broadcast_expr {
         fill_memory_operand(req, s);
         HANDLE_ERROR;
@@ -263,8 +256,6 @@ segment_override: TOK_SEG_REG TOK_COLON {
 };
 
 
-// mov    DWORD PTR [rbx+rdx*4+0x20],ecx
-// lea    ecx,[rsi*8+0x0]
 // nop    WORD PTR cs:[rax+rax*1+0x0]
 // vgatherdpd zmm30{k1},qword [r14+ymm31*8+0x7b]
 
@@ -276,16 +267,20 @@ segment_override: TOK_SEG_REG TOK_COLON {
 // invlpg, invpcid, invept etc
 
 unspecified memory width "mem ptr" without word/dword etc.: xsave, sgdt etc.
-bnd registers, mib memory operands
-
 mixed operand width: movsx
 string operations with segment overrides
 shifts with constant/CL
 bound operands
- V4FMADDPS zmm1{k1}{z}, zmm2+3, m128 - a pair of zmm registers
+ V4FMADDPS zmm1{k1}{z}, zmm2+3, m128 - a pair of zmm registers 2+3
 */
 
-
+ /* AGEN does not have VSIB variant compared to memory */
+agen_expr:indirect_addr_gpr
+        | indirect_addr_gpr_plus_offset
+        | bx_bp_si_di
+        | base_index_scale
+        | base_index_scale_disp
+;
 
 mem_expr: indirect_addr_gpr
         | indirect_addr_gpr_plus_offset

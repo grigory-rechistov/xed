@@ -77,6 +77,7 @@ xed_reg_enum_t parse_single_register(parser_state_t *s, const char* txt);
 void fill_mnemonic_opcode(xed_encoder_request_t* req, parser_state_t *s,
                           char* opcode, unsigned max_len);
 void fill_memory_operand(xed_encoder_request_t* req, parser_state_t *s);
+void fill_agen_operand(xed_encoder_request_t* req, parser_state_t *s);
 void fill_register_operand(xed_encoder_request_t* req, parser_state_t *s, xed_reg_enum_t reg_name);
 void fill_immediate_operand(xed_encoder_request_t* req, parser_state_t *s,
                 xed_uint64_t value, unsigned width_bits);
