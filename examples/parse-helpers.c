@@ -25,23 +25,23 @@ END_LEGAL */
 #include "xed-util.h"
 #include "parse-helpers.h"
 
-static void decorate_opcode_mnemonic(char* opcode, xed_uint_t len,
+static void decorate_opcode_mnemonic(char* opcode, xed_uint_t max_len,
                                      const parser_state_t *s)
 {
     /* Use _NEAR variants as default iclass for "call" and "ret".
        They will be substituted with _FAR versions later, if needed */
-    if ( !strncmp(opcode, "CALL", len)
-      || !strncmp(opcode, "RET", len)) {
-        xed_strncat(opcode, "_NEAR", len);
+    if ( !strncmp(opcode, "CALL", max_len)
+      || !strncmp(opcode, "RET", max_len)) {
+        xed_strncat(opcode, "_NEAR", max_len);
         return;
     }
 
     /* TODO handle aliases for all conditional jumps */
-    if ( !strncmp(opcode, "JA", len)) {
-        strncpy(opcode, "JNBE", len);
+    if (!strncmp(opcode, "JA", max_len)) {
+        strncpy(opcode, "JNBE", max_len);
         return;
-    } else if (!strncmp(opcode, "JAE", len)) {
-        strncpy(opcode, "JNB", len);
+    } else if (!strncmp(opcode, "JAE", max_len)) {
+        strncpy(opcode, "JNB", max_len);
         return;
     } // else TODO
 
@@ -54,8 +54,8 @@ static void decorate_opcode_mnemonic(char* opcode, xed_uint_t len,
         return;
 
     /* make sure string length was passed correctly */
-    xed_assert(len > sizeof(char*));
-    char tmp[len];
+    xed_assert(max_len > sizeof(char*));
+    char tmp[max_len];
     tmp[0] = '\0';
 
 
@@ -66,16 +66,16 @@ static void decorate_opcode_mnemonic(char* opcode, xed_uint_t len,
         //    xed_iclass_t original_iclass = str2xed_iclass_enum_t(opcode);
         const char *forward_prefix = s->repe_seen? "REPE_":
                                      s->repne_seen ? "REPNE_": 0;
-        xed_strncpy(tmp, forward_prefix, len);
+        xed_strncpy(tmp, forward_prefix, max_len);
     }
-    xed_strncat(tmp, opcode, len);
+    xed_strncat(tmp, opcode, max_len);
 
     if (has_post_prefix) {
         const char *post_prefix = "_LOCK";
-        xed_strncat(tmp, post_prefix, len);
+        xed_strncat(tmp, post_prefix, max_len);
     }
 
-    xed_strncpy(opcode, tmp, len);
+    xed_strncpy(opcode, tmp, max_len);
 }
 
 void handle_ambiguous_iclasses(xed_encoder_request_t *req, parser_state_t *s)
@@ -436,10 +436,11 @@ static xed_category_enum_t early_categorize_iclass(xed_iclass_enum_t iclass) {
     return XED_CATEGORY_INVALID; /* iclass does not have special treatment */
 }
 
-void fill_mnemonic_opcode(xed_encoder_request_t* req, parser_state_t *s, char* opcode) {
+void fill_mnemonic_opcode(xed_encoder_request_t* req, parser_state_t *s,
+                          char* opcode, unsigned max_len) {
     /* Sometimes prefixes are encoded inside iclass. We've seen all prefixes
       now and can act on them */
-    decorate_opcode_mnemonic(opcode, sizeof(opcode), s);
+    decorate_opcode_mnemonic(opcode, max_len, s);
     xed_iclass_enum_t iclass =  str2xed_iclass_enum_t(opcode);
     if (iclass == XED_ICLASS_INVALID) {
         if (s->repne_seen || s->repe_seen || s->lock_seen)

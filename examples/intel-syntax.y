@@ -121,11 +121,11 @@ prefixes: /* empty */
 ;
 
 opcode: TOK_OPCODE {
-        fill_mnemonic_opcode(req, s, $1);
+        fill_mnemonic_opcode(req, s, $1, sizeof($1));
         HANDLE_ERROR;
 }
       | TOK_OPCODE TOK_FAR { /* far call/ret/jmp */
-        fill_mnemonic_opcode(req, s, $1);
+        fill_mnemonic_opcode(req, s, $1, sizeof($1));
         s->seen_far_ptr = true;
         HANDLE_ERROR;
 };
