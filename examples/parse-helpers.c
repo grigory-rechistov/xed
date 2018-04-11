@@ -36,14 +36,40 @@ static void decorate_opcode_mnemonic(char* opcode, xed_uint_t max_len,
         return;
     }
 
-    /* TODO handle aliases for all conditional jumps */
-    if (!strncmp(opcode, "JA", max_len)) {
-        strncpy(opcode, "JNBE", max_len);
-        return;
-    } else if (!strncmp(opcode, "JAE", max_len)) {
-        strncpy(opcode, "JNB", max_len);
-        return;
-    } // else TODO
+    if (opcode[0] == 'J') {
+        typedef struct {
+            const char *from;
+            const char *to;
+        } jcc_aliases_t;
+
+        const jcc_aliases_t aliases[] = {
+           {"JNAE", "JB"},
+           {"JC", "JB"},
+           {"JNA", "JBE"},
+           {"JNGE", "JL"},
+           {"JNG", "JLE"},
+           {"JAE", "JNB"},
+           {"JNC", "JNB"},
+           {"JA", "JNBE"},
+           {"JGE", "JNL"},
+           {"JG", "JNLE"},
+           {"JPO", "JNP"},
+           {"JNE", "JNZ"},
+           {"JPE", "JP"},
+           {"JE", "JZ"},
+        };
+        const size_t n_aliases = sizeof(aliases)/sizeof(aliases[0]);
+
+        /* Resolve conditional jumps aliases */
+        for (int i = 0; i < n_aliases; i++) {
+            const char *from = aliases[i].from;
+            const char *to = aliases[i].to;
+            if(!strncmp(opcode, from, max_len)) {
+                strncpy(opcode, to, max_len);
+                return;
+            }
+        }
+    }
 
     /* Sometimes prefixes are encoded inside iclass. We've seen all prefixes
        now and can act on them */
@@ -57,7 +83,6 @@ static void decorate_opcode_mnemonic(char* opcode, xed_uint_t max_len,
     xed_assert(max_len > sizeof(char*));
     char tmp[max_len];
     tmp[0] = '\0';
-
 
     if (has_front_prefix) {
         /* TODO iclasses contain all three forms: REP_, REPE_ and REPNE_.
@@ -207,21 +232,15 @@ void fill_register_operand(xed_encoder_request_t* req, parser_state_t *s, xed_re
         return;
     }
     // The registers operands are numbered starting from the first one
-    // as XED_OPERAND_REG0. We increment regnum (below) every time we
+    // as XED_OPERAND_REG0. We increment reg_num (below) every time we
     // add a register operand.
     xed_operand_enum_t reg_pos = XED_CAST(xed_operand_enum_t,
                                           XED_OPERAND_REG0 + s->reg_num);
-
-    /* TODO check for overflow for number of register operands */
     // store the register identifier in the operand storage field
     xed_encoder_request_set_reg(req, reg_pos, reg_name);
-
     // store the operand storage field name in the encode-order array
     xed_encoder_request_set_operand_order(req, s->operand_index, reg_pos);
-
     deduce_operand_width_gpr(req, s, reg_name);
-
-    // find_vl(reg, &vl); FIXME reenable me
 
     s->operand_index++;
     s->reg_num++;
@@ -278,9 +297,6 @@ void fill_memory_operand(xed_encoder_request_t* req, parser_state_t *s)
     xed_encoder_request_set_index(req, s->index_reg);
     xed_encoder_request_set_scale(req, s->scale_val);
     xed_encoder_request_set_seg0(req,  s->segment_reg);
-
-    // TODO reenable later
-//    find_vl(s->index_reg, &vl); // for scatter/gather
 
     if (s->memory_operand_bytes)
         xed_encoder_request_set_memory_operand_length(
