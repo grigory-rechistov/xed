@@ -200,7 +200,7 @@ void fill_register_operand(xed_encoder_request_t* req, parser_state_t *s, xed_re
         s->error_found = 1;
         return;
     }
-    if (s->regnum > 8) {
+    if (s->reg_num > 8) {
         fprintf(stderr,
               "[XED CLIENT ERROR] Only up to nine register operands allowed\n");
         s->error_found = 1;
@@ -210,7 +210,7 @@ void fill_register_operand(xed_encoder_request_t* req, parser_state_t *s, xed_re
     // as XED_OPERAND_REG0. We increment regnum (below) every time we
     // add a register operand.
     xed_operand_enum_t reg_pos = XED_CAST(xed_operand_enum_t,
-                                          XED_OPERAND_REG0 + s->regnum);
+                                          XED_OPERAND_REG0 + s->reg_num);
 
     /* TODO check for overflow for number of register operands */
     // store the register identifier in the operand storage field
@@ -224,7 +224,7 @@ void fill_register_operand(xed_encoder_request_t* req, parser_state_t *s, xed_re
     // find_vl(reg, &vl); FIXME reenable me
 
     s->operand_index++;
-    s->regnum++;
+    s->reg_num++;
 }
 
 /* Bring displacement width to a value that Xed actually can accept */
@@ -245,13 +245,13 @@ void fill_memory_operand(xed_encoder_request_t* req, parser_state_t *s)
     xed_reg_class_enum_t rci = XED_REG_CLASS_INVALID;
 
 
-    if (s->memop == 0) {
+    if (s->memop_num == 0) {
          // Tell XED that we have a memory operand
          xed_encoder_request_set_mem0(req);
          // Tell XED that the mem0 operand is the next operand:
          xed_encoder_request_set_operand_order(
              req, s->operand_index, XED_OPERAND_MEM0);
-    } else if (s->memop == 1) {
+    } else if (s->memop_num == 1) {
         xed_encoder_request_set_mem1(req);
         // Tell XED that the mem1 operand is the next operand:
         xed_encoder_request_set_operand_order(
@@ -293,7 +293,7 @@ void fill_memory_operand(xed_encoder_request_t* req, parser_state_t *s)
                                                     width_bytes);
     }
 
-    s->memop++;
+    s->memop_num++;
     s->operand_index++;
 }
 

@@ -29,9 +29,8 @@ typedef struct {
 
     xed_state_t* dstate;
     xed_uint_t operand_index; /* sequential number of all operands */
-    /* TODO give better names to members */
-    xed_uint_t regnum; /* sequential number of register operand */
-    xed_uint_t memop; /* sequential number of memory operand */
+    xed_uint_t reg_num; /* sequential number of register operand */
+    xed_uint_t memop_num; /* sequential number of memory operand */
     xed_uint_t immed_num; /* sequential number of literal constant */
     xed_uint_t relbr_num; /* sequential number of relative branch literal */
 
