@@ -211,14 +211,38 @@ K[0-7]  {
 }
 
 "{Z}" {return TOK_ZEROING;} /* vector mask zeroing specifier */
-"{ER}" {return TOK_ER;} /* embedded rounding */
-"{SAE}" {return TOK_SAE;} /* suppress all exceptions */
 
  /* broadcast {1toX}. TODO it ignores actual number of items */
 "{1TO"[0-9]+"}" {return TOK_BCAST;}
 
-"{R"[NDUZ]"-SAE}" {DUP_YYTEXT(); return TOK_ROUNDING;}  /* embedded rounding
-                                                           with suppress all exceptions {rn-sae} */
+ /* suppress all exceptions {sae} */
+"SAE" {
+        yylval->rounding_mode = -1; /* not specified */
+        return TOK_SAE_ROUNDING;
+}
+
+ /* embedded rounding with suppress all exceptions {rne-sae} etc. */
+"R"("NE"|D|U|Z)"-SAE" {
+        /* Use EVEX.L'L encoding */
+        switch (yytext[1]) {
+        case 'N':
+            yylval->rounding_mode = 0;
+            break;
+        case 'D':
+            yylval->rounding_mode = 1;
+            break;
+        case 'U':
+            yylval->rounding_mode = 2;
+            break;
+        case 'Z':
+            yylval->rounding_mode = 3;
+            break;
+        default:
+            s->error_found = 1;
+            break;
+        }
+        RETURN_TOKEN(TOK_SAE_ROUNDING);
+}
 
 "{" {return TOK_LCUBR;} /* should go after tokens above that include curly braces */
 "}" {return TOK_RCUBR;}
@@ -259,7 +283,7 @@ K[0-7]  {
  /* MASM notation for embedded broadcast */
 "BCAST PTR" {
     xed3_set_generic_operand(req, XED_OPERAND_BCAST, 1);
-    return TOK_MEMWIDTH;
+    RETURN_TOKEN(TOK_MEMWIDTH);
 }
 
 "BYTE PTR" {

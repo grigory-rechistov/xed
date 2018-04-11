@@ -63,7 +63,7 @@ static void yyerror(YYLTYPE *locp, void *lexer_state,
         unsigned int width_bits;
     } literal;
 
-    char roundingspec; // todo remove if unneeded
+    int rounding_mode;
     char opcode_string[100]; /* saved here for late mangling */
     char garbage[100];
 }
@@ -98,11 +98,8 @@ static void yyerror(YYLTYPE *locp, void *lexer_state,
 %token TOK_LCUBR
 %token TOK_RCUBR
 %token TOK_ZEROING
-%token TOK_ER
-%token TOK_SAE
-
 %token TOK_BCAST
-%token TOK_ROUNDING
+%token<rounding_mode> TOK_SAE_ROUNDING
 
 %token TOK_GARBAGE
 
@@ -149,8 +146,6 @@ operand:  general_purpose_register
         | lea_spec
         | mem_spec
         | vec_register_filtered
-        //  x87 fpu, bnd reg
-        // | {sae}, {er}
 ;
 
 general_purpose_register: TOK_GPR {
@@ -240,12 +235,12 @@ mem_spec:  segment_override_mem_spec
          | default_segment_mem_spec
 ;
 
-segment_override_mem_spec: TOK_MEMWIDTH segment_override TOK_LSQBR mem_expr TOK_RSQBR broadcast_expr {
+segment_override_mem_spec: TOK_MEMWIDTH segment_override TOK_LSQBR mem_expr TOK_RSQBR broadcast_modifier {
         fill_memory_operand(req, s);
         HANDLE_ERROR(@4);
 };
 
-default_segment_mem_spec: TOK_MEMWIDTH TOK_LSQBR mem_expr TOK_RSQBR broadcast_expr {
+default_segment_mem_spec: TOK_MEMWIDTH TOK_LSQBR mem_expr TOK_RSQBR broadcast_modifier {
         fill_memory_operand(req, s);
         HANDLE_ERROR(@3);
 };
@@ -261,11 +256,13 @@ segment_override: TOK_SEG_REG TOK_COLON {
 // vgatherdpd zmm30{k1},qword [r14+ymm31*8+0x7b]
 
 /* TODO add support and tests for:
-// VADDPD zmm0 {k1},zmm1,zmm3,{rz-sae}
-// vaddps zmm7 {k6}, zmm2, zmm4, {rd-sae}
-//  disp8*N.
-//  vpcompressd [rdi] {k1}, zmm1 - memory and masking from here: https://blogs.msdn.microsoft.com/vcblog/2017/07/11/microsoft-visual-studio-2017-supports-intel-avx-512/
-// invlpg, invpcid, invept etc
+ VADDPD zmm0 {k1},zmm1,zmm3,{rz-sae}
+ vaddps zmm7 {k6}, zmm2, zmm4, {rd-sae}
+  disp8*N.
+  vpcompressd [rdi] {k1}, zmm1 - memory and masking from here: https://blogs.msdn.microsoft.com/vcblog/2017/07/11/microsoft-visual-studio-2017-supports-intel-avx-512/
+ invlpg, invpcid, invept etc
+VCMPPD k1 {k2}, zmm2, zmm3/m512/m64bcst{sae}, imm8 <- k1{k2}
+
 
 unspecified memory width "mem ptr" without word/dword etc.: xsave, sgdt etc.
 mixed operand width: movsx
@@ -383,6 +380,7 @@ base_vec_index_scale_disp: TOK_GPR TOK_PLUS TOK_VEC_REG TOK_MULTI TOK_CONSTANT T
 
 vec_register_filtered: vec_register_masked
                      | vec_register_masked_zeroed
+                     | vec_register_sae
 ;
 
  /* zmm30 {k3} */
@@ -391,7 +389,7 @@ vec_register_masked: TOK_VEC_REG TOK_LCUBR TOK_OPMASK_REG TOK_RCUBR {
         fill_register_operand(req, s, $1); // main register
         deduce_operand_width_vector(req, s, $1);
         fill_register_operand(req, s, $3); // opmask register
-        HANDLE_ERROR(@1); // TODO seaprate the action into two to improve location tracking
+        HANDLE_ERROR(@1); // TODO separate the action into two to improve location tracking
 };
 
  /* zmm30 {k3} {z} */
@@ -401,12 +399,29 @@ vec_register_masked_zeroed: TOK_VEC_REG TOK_LCUBR TOK_OPMASK_REG TOK_RCUBR TOK_Z
         deduce_operand_width_vector(req, s, $1);
         fill_register_operand(req, s, $3); // opmask register
         xed3_set_generic_operand(req, XED_OPERAND_ZEROING, 1);
-        HANDLE_ERROR(@1); // TODO seaprate the action into two to improve location tracking
+        HANDLE_ERROR(@1); // TODO separate the action into two to improve location tracking
+};
+
+
+vec_register_sae: TOK_VEC_REG TOK_LCUBR sae_modifiers TOK_RCUBR {
+        fill_register_operand(req, s, $1); // main register
+        deduce_operand_width_vector(req, s, $1);
+        HANDLE_ERROR(@1);
+};
+
+ /* {sae} and {rn|d|u|z-sae} */
+sae_modifiers: TOK_SAE_ROUNDING {
+        xed3_set_generic_operand(req, XED_OPERAND_SAE, 1);
+        if ($1 >= 0) {
+            unsigned xed_rnding = $1+1; /* XED shifts it */
+            xed3_set_generic_operand(req, XED_OPERAND_ROUNDC, xed_rnding);
+        }
+        HANDLE_ERROR(@1);
 };
 
  /* 1toX memory broadcast */
-broadcast_expr: /* empty */
-              | TOK_BCAST {
+broadcast_modifier: /* empty */
+                  | TOK_BCAST {
         xed3_set_generic_operand(req, XED_OPERAND_BCAST, 1);
         HANDLE_ERROR(@1);
 };
