@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Read lines from stdin and create test cases for them
-let start=1000
+let start=123
 while IFS='' read -r line || [[ -n "$line" ]]; do
-    DIRNAME=`/usr/intel/pkgs/bash/4.4/bin/bash -c "printf test-%05d $start"
-    mkdir -k $DIRNAME
+    DIRNAME=`/usr/intel/pkgs/bash/4.4/bin/bash -c "printf test-%05d $start"`
+    /bin/mkdir -p $DIRNAME
     echo BUILDDIR/xed $line > $DIRNAME/cmd
     echo ENC > $DIRNAME/codes
     echo 0 > $DIRNAME/retcode.reference

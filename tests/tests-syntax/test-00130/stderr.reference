@@ -1,0 +1,4 @@
+[XED CLIENT ERROR] Bad instruction name: 'LOLWUT'
+input: lolwut ymm2, ymmword ptr [esp + ymm4*1], ymm3 
+error: ^
+

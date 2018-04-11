@@ -1,0 +1,1 @@
+BUILDDIR/xed -E lea eax, [esp + ebp * 4 + 0x01123]

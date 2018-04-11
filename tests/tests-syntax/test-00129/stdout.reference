@@ -1,0 +1,5 @@
+Request: VGATHERDPD EASZ:2, MEM0:ymmword ptr [ESP+YMM4*1], MEM_WIDTH:32, MODE:1, REG0:YMM2, REG1:YMM3, SMODE:1, VL:1
+OPERAND ORDER: REG0 MEM0 REG1 
+Could not encode: vgatherdpd ymm2, ymmword ptr [esp + ymm4*1], ymm3 
+Error code was: GENERAL_ERROR
+[XED CLIENT ERROR] Dying

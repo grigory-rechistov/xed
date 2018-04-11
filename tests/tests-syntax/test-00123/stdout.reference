@@ -1,0 +1,6 @@
+AGEN operand is only expected for LEA. Are you sure you did not omit "mem ptr" specifier?
+Request: MOV AGEN:ptr [EDX], EASZ:2, EOSZ:2, MODE:1, REG0:EAX, SMODE:1
+OPERAND ORDER: REG0 AGEN 
+Could not encode: mov eax, [edx] 
+Error code was: GENERAL_ERROR
+[XED CLIENT ERROR] Dying

@@ -1,0 +1,5 @@
+Request: LEA AGEN:ptr [ESP+EBP*4+0x1123], DISP_WIDTH:16, EASZ:2, EOSZ:2, MODE:1, REG0:EAX, SMODE:1
+OPERAND ORDER: REG0 AGEN 
+Could not encode: lea eax, [esp + ebp * 4 + 0x1123] 
+Error code was: GENERAL_ERROR
+[XED CLIENT ERROR] Dying
