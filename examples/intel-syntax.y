@@ -1,4 +1,32 @@
+/*BEGIN_LEGAL
+
+Copyright (c) 2018 Intel Corporation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+END_LEGAL */
+
 /* Parser for assembly in Intel notation for XED */
+
+/* TODO add support and tests for the following syntax.
+ - unspecified memory width "mem ptr" without word/dword etc.: xsave, sgdt etc.
+ - disp8*N.
+ - invlpg, invpcid, invept etc
+ - VCMPPD k1 {k2}, zmm2, zmm3/m512/m64bcst{sae}, imm8 <- k1{k2}
+ - string operations with segment overrides
+ - shifts with constant/CL
+ - V4FMADDPS zmm1{k1}{z}, zmm2+3, m128 - a pair of zmm registers 2+3
+*/
 
 /* Produce reentrant parser */
 %define api.pure full
@@ -19,12 +47,6 @@
 #include <stdbool.h>
 #include "xed-encode.h"
 #include "parse-helpers.h"
-
-/* Deprecated, use 'parse.error verbose' option for newer Bison */
-#ifdef YYERROR_VERBOSE
-# undef YYERROR_VERBOSE
-# define YYERROR_VERBOSE 1
-#endif
 
 /* Define scanner function for lexer */
 #define YY_DECL int yylex ( YYSTYPE * yylval_param, YYLTYPE * yylloc_param, \
@@ -65,7 +87,6 @@ static void yyerror(YYLTYPE *locp, void *lexer_state,
 
     int rounding_mode;
     char opcode_string[100]; /* saved here for late mangling */
-    char garbage[100];
 }
 
 %token<opcode_string> TOK_OPCODE
@@ -101,13 +122,12 @@ static void yyerror(YYLTYPE *locp, void *lexer_state,
 %token TOK_BCAST
 %token<rounding_mode> TOK_SAE_ROUNDING
 
-%token TOK_GARBAGE
+%token TOK_GARBAGE /* user by lexer to report problems */
 
 %start asmline
 
 %%
 
-/* TODO add TOK_GARBAGE for error recovery */
 asmline: prefixes opcode operands
 ;
 
@@ -250,27 +270,6 @@ segment_override: TOK_SEG_REG TOK_COLON {
     // TODO s->segno ++;
     HANDLE_ERROR(@1);
 };
-
-
-// nop    WORD PTR cs:[rax+rax*1+0x0]
-// vgatherdpd zmm30{k1},qword [r14+ymm31*8+0x7b]
-
-/* TODO add support and tests for:
- VADDPD zmm0 {k1},zmm1,zmm3,{rz-sae}
- vaddps zmm7 {k6}, zmm2, zmm4, {rd-sae}
-  disp8*N.
-  vpcompressd [rdi] {k1}, zmm1 - memory and masking from here: https://blogs.msdn.microsoft.com/vcblog/2017/07/11/microsoft-visual-studio-2017-supports-intel-avx-512/
- invlpg, invpcid, invept etc
-VCMPPD k1 {k2}, zmm2, zmm3/m512/m64bcst{sae}, imm8 <- k1{k2}
-
-
-unspecified memory width "mem ptr" without word/dword etc.: xsave, sgdt etc.
-mixed operand width: movsx
-string operations with segment overrides
-shifts with constant/CL
-bound operands
- V4FMADDPS zmm1{k1}{z}, zmm2+3, m128 - a pair of zmm registers 2+3
-*/
 
  /* AGEN does not have VSIB variant compared to memory */
 agen_expr:indirect_addr_gpr
@@ -428,7 +427,7 @@ broadcast_modifier: /* empty */
 
 %%
 
-/* Function is called whenever YYABORT happened or parser failed to parse */
+/* The function is called when YYABORT happened or parser found syntax error */
 static void yyerror(YYLTYPE *locp, void *lexer_state,
              xed_encoder_request_t *req, parser_state_t *state, const char* msg)
 {
