@@ -36,7 +36,7 @@ static void decorate_opcode_mnemonic(char* opcode, xed_uint_t max_len,
         return;
     }
 
-    if (opcode[0] == 'J') {
+    if (opcode[0] == 'J') {/* all aliases for conditional jumps start with J */
         typedef struct {
             const char *from;
             const char *to;
@@ -263,6 +263,9 @@ void fill_memory_operand(xed_encoder_request_t* req, parser_state_t *s)
     xed_reg_class_enum_t rc = XED_REG_CLASS_INVALID;
     xed_reg_class_enum_t rci = XED_REG_CLASS_INVALID;
 
+    if (s->memory_operand_bytes == 0) {
+        s->memory_operand_bytes  = guess_memory_operand_bytes(req, s);
+    }
 
     if (s->memop_num == 0) {
          // Tell XED that we have a memory operand
@@ -540,13 +543,106 @@ void fill_relative_offset_operand(xed_encoder_request_t* req, parser_state_t *s,
 
 xed_bool_t instr_category_uses_rel_branch(xed_category_enum_t cat) {
     switch (cat) {
-        case XED_CATEGORY_CALL:
-        case XED_CATEGORY_COND_BR:
-        case XED_CATEGORY_UNCOND_BR:
-            return 1;
-        default:
-            return 0;
+    case XED_CATEGORY_CALL:
+    case XED_CATEGORY_COND_BR:
+    case XED_CATEGORY_UNCOND_BR:
+        return 1;
+    default:
+        return 0;
     }
     return 0;
 }
 
+/* For instructions that use m16:32, m16&32, m16&64 and m16:64 notations */
+static xed_uint_t mem6_or_10(const xed_state_t *dstate)
+{
+    /* TODO account for address size override somehow */
+    switch(dstate->mmode) {
+    case XED_MACHINE_MODE_LONG_64:
+        return 10;
+    default:
+        return 6;
+    }
+}
+
+static xed_uint_t mem94_or_108(const xed_state_t *dstate)
+{
+    /* TODO account for address size override somehow */
+    switch(dstate->mmode) {
+    case XED_MACHINE_MODE_REAL_16:
+    case XED_MACHINE_MODE_LEGACY_16:
+    case XED_MACHINE_MODE_LONG_COMPAT_16:
+        return 94;
+    default:
+        return 108;
+    }
+}
+
+static xed_uint_t mem14_or_28(const xed_state_t *dstate)
+{
+    /* TODO account for address size override somehow */
+    switch(dstate->mmode) {
+    case XED_MACHINE_MODE_REAL_16:
+    case XED_MACHINE_MODE_LEGACY_16:
+    case XED_MACHINE_MODE_LONG_COMPAT_16:
+        return 14;
+    default:
+        return 28;
+    }
+}
+
+/* When "mem ptr" is specified, memory operand width is defined by opcode */
+xed_uint_t guess_memory_operand_bytes(xed_encoder_request_t* req,
+                                      parser_state_t *s)
+{
+    /* TODO add all iclasses that expect non-standard memory operand size
+       See xed-operand-width.txt */
+    switch (xed3_operand_get_iclass(req)) {
+    case XED_ICLASS_XSAVE:
+    case XED_ICLASS_XSAVE64:
+    case XED_ICLASS_XSAVEC:
+    case XED_ICLASS_XSAVEC64:
+    case XED_ICLASS_XSAVEOPT:
+    case XED_ICLASS_XSAVEOPT64:
+    case XED_ICLASS_XSAVES:
+    case XED_ICLASS_XSAVES64:
+    case XED_ICLASS_XRSTOR:
+    case XED_ICLASS_XRSTOR64:
+    case XED_ICLASS_XRSTORS:
+    case XED_ICLASS_XRSTORS64:
+        return 576; /* That is what XED uses */
+
+    case XED_ICLASS_FXSAVE:
+    case XED_ICLASS_FXSAVE64:
+    case XED_ICLASS_FXRSTOR:
+    case XED_ICLASS_FXRSTOR64:
+        return 512;
+
+    case XED_ICLASS_FNSAVE:
+    case XED_ICLASS_FRSTOR:
+        return mem94_or_108(s->dstate);
+    case XED_ICLASS_FLDENV:
+    case XED_ICLASS_FNSTENV:
+         return mem14_or_28(s->dstate);
+
+    case XED_ICLASS_LGDT:
+    case XED_ICLASS_LIDT:
+        return mem6_or_10(s->dstate);
+    case XED_ICLASS_JMP_FAR:
+    case XED_ICLASS_CALL_FAR:
+        return mem6_or_10(s->dstate);
+    case XED_ICLASS_LDS:
+    case XED_ICLASS_LES:
+        return 6; /* Not present in 64-bit mode */
+    case XED_ICLASS_LSS:
+    case XED_ICLASS_LFS:
+    case XED_ICLASS_LGS:
+        return mem6_or_10(s->dstate);
+    default:
+        break;
+    }
+
+    /* We do not want guessing otherwise */
+    fprintf(stderr,"Cannot guess memory operand size. Specify it explicitly\n");
+    return 0;
+}

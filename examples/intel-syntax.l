@@ -291,13 +291,16 @@ K[0-7]  {
 
  /* Memory width specifiers */
 
+ /* Generic memory operand, operand width needs to be deduced */
 "MEM"{WHITESPACE}+"PTR" {
-    //s->memory_operand_bytes = 0; // ???
+    /* postpone determination for later moment when opcode is known */
+    s->memory_operand_bytes = 0;
     RETURN_TOKEN(TOK_MEMWIDTH);
 }
 
  /* MASM notation for embedded broadcast */
 "BCAST"{WHITESPACE}+"PTR" {
+    s->memory_operand_bytes = 1; /* Xed seems to not care in case of broadcasts */
     xed3_set_generic_operand(req, XED_OPERAND_BCAST, 1);
     RETURN_TOKEN(TOK_MEMWIDTH);
 }
@@ -319,6 +322,12 @@ K[0-7]  {
 
 "QWORD"{WHITESPACE}+"PTR" {
     s->memory_operand_bytes = 8;
+    return TOK_MEMWIDTH;
+}
+
+ /* Non-standard notation for certain x87 memory operands */
+"FPUWORD"{WHITESPACE}+"PTR" {
+    s->memory_operand_bytes = 10;
     return TOK_MEMWIDTH;
 }
 
@@ -349,4 +358,3 @@ K[0-7]  {
 }
 
 %%
-

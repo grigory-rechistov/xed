@@ -87,4 +87,6 @@ void fill_relative_offset_operand(xed_encoder_request_t* req, parser_state_t *s,
                                   xed_uint64_t value, unsigned orig_bits);
 xed_bool_t instr_category_uses_rel_branch(xed_category_enum_t cat);
 
+xed_uint_t guess_memory_operand_bytes(xed_encoder_request_t* req, parser_state_t *s);
+
 #endif // PARSE_HELPERS_H
