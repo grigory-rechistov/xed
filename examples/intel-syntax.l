@@ -298,6 +298,13 @@ K[0-7]  {
     RETURN_TOKEN(TOK_MEMWIDTH);
 }
 
+ /* Non-standard notation for explicitly specifying memory operand width */
+"MEM"[0-9]+{WHITESPACE}+"PTR" {
+    const char* digits = yytext+3; /* skip "mem" part */
+    s->memory_operand_bytes = xed_strtoll(digits, 10); /* TODO overflow detection? */;
+    RETURN_TOKEN(TOK_MEMWIDTH);
+}
+
  /* MASM notation for embedded broadcast */
 "BCAST"{WHITESPACE}+"PTR" {
     s->memory_operand_bytes = 1; /* Xed seems to not care in case of broadcasts */
