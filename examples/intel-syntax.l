@@ -69,6 +69,8 @@ static void update_location_information(YYLTYPE *yylloc, const char *txt) {
 
 /* Definitions of some patterns */
 
+WHITESPACE [ \t]
+
  /* Instruction pointers */
 PROG_CNTR (E|R)?IP
 
@@ -106,7 +108,7 @@ ALPHANUMWORD [A-Z][A-Z0-9_]*
 
 %%
 
-[ \t]   ; // ignore all whitespace and tabs
+{WHITESPACE}   ; // ignore all whitespace and tabs
 "," {return TOK_COMMA;}
 "[" {return TOK_LSQBR;}
 "]" {return TOK_RSQBR;}
@@ -288,41 +290,40 @@ K[0-7]  {
 }
 
  /* Memory width specifiers */
- /* TODO support several spaces between 'byte' and 'ptr' */
 
-"MEM PTR" {
+"MEM"{WHITESPACE}+"PTR" {
     //s->memory_operand_bytes = 0; // ???
     RETURN_TOKEN(TOK_MEMWIDTH);
 }
 
  /* MASM notation for embedded broadcast */
-"BCAST PTR" {
+"BCAST"{WHITESPACE}+"PTR" {
     xed3_set_generic_operand(req, XED_OPERAND_BCAST, 1);
     RETURN_TOKEN(TOK_MEMWIDTH);
 }
 
-"BYTE PTR" {
+"BYTE"{WHITESPACE}+"PTR" {
     s->memory_operand_bytes = 1;
     return TOK_MEMWIDTH;
 }
 
-"WORD PTR" {
+"WORD"{WHITESPACE}+"PTR" {
     s->memory_operand_bytes = 2;
     return TOK_MEMWIDTH;
 }
 
-"DWORD PTR" {
+"DWORD"{WHITESPACE}+"PTR" {
     s->memory_operand_bytes = 4;
     return TOK_MEMWIDTH;
 }
 
-"QWORD PTR" {
+"QWORD"{WHITESPACE}+"PTR" {
     s->memory_operand_bytes = 8;
     return TOK_MEMWIDTH;
 }
 
  /* Memory width specifier for vector operands  */
-[XYZ]"MMWORD PTR" {
+[XYZ]"MMWORD"{WHITESPACE}+"PTR" {
     s->memory_operand_bytes = yytext[0] == 'X'? 16:
                               yytext[0] == 'Y'? 32:
                               yytext[0] == 'Z'? 64:
