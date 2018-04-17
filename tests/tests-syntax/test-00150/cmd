@@ -1,0 +1,1 @@
+BUILDDIR/xed -E fxsave mem ptr[ebx]

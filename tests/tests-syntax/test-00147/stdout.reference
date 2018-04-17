@@ -1,0 +1,4 @@
+Request: LFS EASZ:1, EOSZ:1, MEM0:dword ptr [BX], MEM_WIDTH:4, REG0:AX, SMODE:1
+OPERAND ORDER: REG0 MEM0 
+Encodable! 0FB407
+.byte 0x0f,0xb4,0x07

@@ -1,0 +1,4 @@
+Request: FLDENV EASZ:1, MEM0:ptr [BX], MEM_WIDTH:14, SMODE:1
+OPERAND ORDER: MEM0 
+Encodable! D927
+.byte 0xd9,0x27

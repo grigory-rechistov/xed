@@ -1,0 +1,1 @@
+BUILDDIR/xed -E lfs eax, mem ptr[ebx]

@@ -1,0 +1,4 @@
+Request: XSAVES EASZ:2, MEM0:ptr [EBX], MEM_WIDTH:576, MODE:1, SMODE:1
+OPERAND ORDER: MEM0 
+Encodable! 0FC72B
+.byte 0x0f,0xc7,0x2b

@@ -1,0 +1,4 @@
+Request: FNSAVE EASZ:1, MEM0:ptr [BX], MEM_WIDTH:94, SMODE:1
+OPERAND ORDER: MEM0 
+Encodable! DD37
+.byte 0xdd,0x37

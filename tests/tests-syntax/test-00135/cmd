@@ -1,0 +1,1 @@
+BUILDDIR/xed -E bound eax, qword ptr [ebx]

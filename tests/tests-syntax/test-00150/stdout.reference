@@ -1,0 +1,4 @@
+Request: FXSAVE EASZ:2, MEM0:ptr [EBX], MEM_WIDTH:512, MODE:1, SMODE:1
+OPERAND ORDER: MEM0 
+Encodable! 0FAE03
+.byte 0x0f,0xae,0x03

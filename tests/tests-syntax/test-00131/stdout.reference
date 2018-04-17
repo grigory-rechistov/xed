@@ -1,0 +1,4 @@
+Request: LIDT EASZ:1, MEM0:ptr [BX], MEM_WIDTH:6, SMODE:1
+OPERAND ORDER: MEM0 
+Encodable! 0F011F
+.byte 0x0f,0x01,0x1f

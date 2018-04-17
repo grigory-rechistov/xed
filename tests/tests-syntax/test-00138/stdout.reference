@@ -1,0 +1,4 @@
+Request: CALL_FAR EASZ:1, MEM0:dword ptr [BX], MEM_WIDTH:4, SMODE:1
+OPERAND ORDER: MEM0 
+Encodable! FF1F
+.byte 0xff,0x1f

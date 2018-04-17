@@ -1,0 +1,1 @@
+BUILDDIR/xed -E call_far mem6 ptr[ebx]

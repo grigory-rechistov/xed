@@ -1,0 +1,1 @@
+BUILDDIR/xed -16 -E fnsave mem ptr[bx]

@@ -1,0 +1,4 @@
+Request: FSTP EASZ:2, MEM0:ptr [EBX], MEM_WIDTH:10, MODE:1, REG0:st(0), SMODE:1
+OPERAND ORDER: MEM0 REG0 
+Encodable! DB3B
+.byte 0xdb,0x3b
