@@ -89,11 +89,12 @@ static void yyerror(YYLTYPE *locp, void *lexer_state,
     char opcode_string[100]; /* saved here for late mangling */
 }
 
-%token<opcode_string> TOK_OPCODE
-
 %token TOK_REPE_PREF
 %token TOK_REPNE_PREF
 %token TOK_LOCK_PREF
+%token TOK_OPSIZE_PREF
+
+%token<opcode_string> TOK_OPCODE
 
 %token<regname> TOK_GPR
 %token<regname> TOK_VEC_REG
@@ -137,6 +138,7 @@ prefixes: /* empty*/
 prefix:    TOK_REPE_PREF
          | TOK_REPNE_PREF
          | TOK_LOCK_PREF
+         | TOK_OPSIZE_PREF
 ;
 
 opcode: TOK_OPCODE {

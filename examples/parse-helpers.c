@@ -650,3 +650,29 @@ xed_uint_t guess_memory_operand_bytes(xed_encoder_request_t* req,
     fprintf(stderr,"Cannot guess memory operand size. Specify it explicitly\n");
     return 0;
 }
+
+void specify_opsize_override(xed_encoder_request_t* req, parser_state_t *s,
+                             xed_uint_t opsize)
+{
+    switch (opsize) {
+    case 8:
+        xed_encoder_request_set_effective_operand_width(req, 8);
+        break;
+    case 16:
+        xed_encoder_request_set_effective_operand_width(req, 16);
+        break;
+    case 32:
+        xed_encoder_request_set_effective_operand_width(req, 32);
+        break;
+    case 64:
+        xed_encoder_request_set_effective_operand_width(req, 64);
+        break;
+    /* TODO support vector element size overrides: 128, 256, 512? */
+    default:
+            fprintf(stderr,
+                    "[XED CLIENT ERROR] Unsupported operand size value: %u\n",
+                    opsize);
+        s->error_found = 1;
+        break;
+    }
+}

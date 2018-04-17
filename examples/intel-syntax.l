@@ -119,8 +119,8 @@ ALPHANUMWORD [A-Z][A-Z0-9_]*
 
 
 REP|REPE|REPZ { xed_encoder_request_set_rep(req);
-                 /* NOTE does not affect string instructions as presence of
-                    prefixes is encoded in their iclass */
+               /* NOTE does not affect string instructions as presence of
+                  prefixes is encoded in their iclass */
                 s->repe_seen = true;
                 return TOK_REPE_PREF;
 }
@@ -131,7 +131,7 @@ REPNE|REPNZ { xed_encoder_request_set_repne(req);
               return TOK_REPNE_PREF;
 }
 XACQUIRE { xed_encoder_request_set_repne(req);
-              /* NOTE currently not fully supported by xed_encode() */
+           /* NOTE currently not fully supported by xed_encode() */
            s->repne_seen = true;
            return TOK_REPNE_PREF;
 }
@@ -145,6 +145,16 @@ LOCK { /* To be encoded into iclass */
        s->lock_seen = true;
        return TOK_LOCK_PREF;
 }
+
+ /* NASM-style operand size override prefix: "o16", "o32" etc. */
+O[0-9]+ {
+        const char* digits = yytext+1; /* skip the leading 'o' */
+        xed_uint_t opsize = xed_strtoll(digits, 10); /* TODO overflow detection? */
+        specify_opsize_override(req, s, opsize);
+        RETURN_TOKEN(TOK_OPSIZE_PREF);
+}
+
+ /* TODO: add address size override prefixes? */
 
  /* GPRs and RIP */
 {ALLGPR} {
