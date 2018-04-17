@@ -131,11 +131,12 @@ static void yyerror(YYLTYPE *locp, void *lexer_state,
 asmline: prefixes opcode operands
 ;
 
-prefixes: /* empty */
-         | TOK_REPE_PREF
+prefixes: /* empty*/
+         | prefixes prefix
+
+prefix:    TOK_REPE_PREF
          | TOK_REPNE_PREF
          | TOK_LOCK_PREF
-         /* TODO support multiple single-byte prefixes? */
 ;
 
 opcode: TOK_OPCODE {
