@@ -595,9 +595,16 @@ static xed_uint_t mem14_or_28(const xed_state_t *dstate)
 xed_uint_t guess_memory_operand_bytes(xed_encoder_request_t* req,
                                       parser_state_t *s)
 {
-    /* TODO add all iclasses that expect non-standard memory operand size
-       See xed-operand-width.txt */
+    /* Non-standard memory operand sizes are listed in xed-operand-width.txt */
     switch (xed3_operand_get_iclass(req)) {
+    case XED_ICLASS_JMP_FAR:
+    case XED_ICLASS_CALL_FAR:
+        return mem6_or_10(s->dstate);
+    case XED_ICLASS_JMP:
+    case XED_ICLASS_CALL_NEAR:
+        if (s->seen_far_ptr) /* Resolve ambiguity between near and far calls */
+            return mem6_or_10(s->dstate);
+        break;
     case XED_ICLASS_XSAVE:
     case XED_ICLASS_XSAVE64:
     case XED_ICLASS_XSAVEC:
@@ -627,9 +634,6 @@ xed_uint_t guess_memory_operand_bytes(xed_encoder_request_t* req,
 
     case XED_ICLASS_LGDT:
     case XED_ICLASS_LIDT:
-        return mem6_or_10(s->dstate);
-    case XED_ICLASS_JMP_FAR:
-    case XED_ICLASS_CALL_FAR:
         return mem6_or_10(s->dstate);
     case XED_ICLASS_LDS:
     case XED_ICLASS_LES:
