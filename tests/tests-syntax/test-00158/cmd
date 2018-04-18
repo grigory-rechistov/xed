@@ -1,0 +1,1 @@
+BUILDDIR/xed -E o64 call far mem ptr [ebx]

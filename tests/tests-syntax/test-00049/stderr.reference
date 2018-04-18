@@ -1,4 +1,4 @@
-[XED_CLIENT_ERROR] Scanner parsing error: syntax error (symbols [6:11])
+[XED CLIENT ERROR] Bad instruction name or incompatible prefixes: 'REPNE_CMPSB_LOCK'
 input: lock repne cmpsb 
-error:      ^
+error:            ^
 

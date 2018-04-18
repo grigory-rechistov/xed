@@ -1,0 +1,3 @@
+Request: POPA SMODE:1
+Encodable! 61
+.byte 0x61

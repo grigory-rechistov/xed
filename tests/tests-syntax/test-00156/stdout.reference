@@ -1,0 +1,3 @@
+Request: POPAD EOSZ:2, SMODE:1
+Encodable! 6661
+.byte 0x66,0x61
