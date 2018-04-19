@@ -89,7 +89,8 @@ def mkenv():
                                  xed_dir='',
                                  build_cpp_examples=False,
                                  set_copyright=False,
-                                 pin_crt='')
+                                 pin_crt='',
+                                 flex_bison=False)
 
     env['xed_defaults'] = standard_defaults
     env.set_defaults(env['xed_defaults'])
@@ -217,6 +218,10 @@ def xed_args(env):
                           action="store_true",
                           dest="set_copyright",
                           help="Set the Intel copyright on Windows XED executable")
+    env.parser.add_option("--flex-bison", 
+                          action="store_true",
+                          dest="flex_bison",
+                          help="Use flex and bison to generate assembly syntax parser.")
 
     env.parse_args(env['xed_defaults'])
     
@@ -304,12 +309,37 @@ def build_examples(env, work_queue):
         cc_shared_files.extend(env.src_dir_join([ 
           'xed-dot.c',
           'xed-dot-prep.c']))
-        
+
     if env['encoder']:
        cc_shared_files += env.src_dir_join([ 'xed-enc-lang.c'])
-       cc_shared_files += env.src_dir_join([ 'intel-syntax.parser.c'])
-       cc_shared_files += env.src_dir_join([ 'intel-syntax.lexer.c'])
        cc_shared_files += env.src_dir_join([ 'parse-helpers.c'])
+
+       env.add_include_dir( os.path.join(env['src_dir'], "pregenerated") )
+       cc_shared_files += env.src_dir_join([ 'pregenerated/intel-syntax.parser.c'])
+       cc_shared_files += env.src_dir_join([ 'pregenerated/intel-syntax.lexer.c'])
+
+       if env['flex_bison']:
+           print "TODO invoking flex/bison here"
+           # TODO make mbuild recognize and translate .l/.y files
+           # The kludge below starts a separate mbuild session that spews
+           # files into the source tree, not into the obj/ folder
+           src_dir = env['src_dir']
+           out_dir = os.path.join(src_dir, "pregenerated")
+           bison_cmd = ("bison --defines --output=%s/intel-syntax.parser.c" +
+                        " %s/intel-syntax.y") % (out_dir, src_dir)
+           flex_cmd = ("flex --header-file=%s/intel-syntax.lexer.h" +
+                       " --outfile=%s/intel-syntax.lexer.c" +
+                       " %s/intel-syntax.l") % (out_dir, out_dir, src_dir)
+           bc = mbuild.command_t(bison_cmd)
+           fc = mbuild.command_t(flex_cmd)
+           bc.add_after_me(fc) # order is important
+           parser_wq = mbuild.work_queue_t(1) # no sense in parallel build
+           parser_wq.add(bc)
+           parser_wq.add(fc)
+           okay = parser_wq.build(show_progress=True, show_output=True)
+           if not okay:
+               xbc.cdie("Rebuilding of lexer/parser files failed")
+
     cc_shared_objs  = env.compile( examples_dag, cc_shared_files)
     # the XED command line tool
     xed_cmdline_files = [ 'xed-disas-raw.c',

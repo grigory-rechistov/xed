@@ -580,7 +580,8 @@ def mkenv():
                                  static_stripped=False,
                                  set_copyright=False,
                                  first_lib=None,
-                                 last_lib=None)
+                                 last_lib=None,
+                                 flex_bison=False)
 
     env['xed_defaults'] = standard_defaults
     env.set_defaults(env['xed_defaults'])
@@ -844,6 +845,11 @@ def xed_args(env):
                           action="store_true",
                           dest="set_copyright",
                           help="Set the Intel copyright on Windows XED executable")
+    env.parser.add_option("--flex-bison", 
+                          action="store_true",
+                          dest="flex_bison",
+                          help="Use flex and bison to generate Intel" +
+                               " syntax assmebly parser")
 
     env.parse_args(env['xed_defaults'])
     
