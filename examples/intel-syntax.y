@@ -68,6 +68,8 @@ END_LEGAL */
 #include <stdlib.h>
 #include "xed-encode.h"
 #include "intel-syntax.parser.h"
+
+#define YY_NO_UNISTD_H // work around flex's attempt to include unistd.h
 #include "intel-syntax.lexer.h"
 
 int yylex (YYSTYPE * yylval_param, YYLTYPE * yylloc_param , yyscan_t yyscanner,
@@ -223,10 +225,11 @@ literal_const: TOK_CONSTANT {
 };
 
 signed_literal: TOK_MINUS TOK_CONSTANT {
+        xed_uint64_t negval = -XED_CAST(xed_int64_t, $2.value);
         if (instr_category_uses_rel_branch(s->early_category))
-            fill_relative_offset_operand(req, s, -$2.value, $2.width_bits);
+            fill_relative_offset_operand(req, s, negval, $2.width_bits);
         else
-            fill_immediate_operand(req, s, -$2.value, $2.width_bits);
+            fill_immediate_operand(req, s, negval, $2.width_bits);
         HANDLE_ERROR(@1);
 }
               | TOK_PLUS TOK_CONSTANT {
@@ -244,7 +247,8 @@ far_pointer: TOK_CONSTANT TOK_COLON TOK_CONSTANT {
 }
           | TOK_CONSTANT TOK_COLON TOK_MINUS TOK_CONSTANT {
        /* Negate the offset */
-       fill_far_pointer_operand(req, s, $1.value, $1.width_bits, -$4.value, $4.width_bits);
+       xed_uint64_t negval = -XED_CAST(xed_int64_t, $4.value);
+       fill_far_pointer_operand(req, s, $1.value, $1.width_bits, negval, $4.width_bits);
        s->seen_far_ptr = true;
        HANDLE_ERROR(@1);
 };
@@ -307,7 +311,7 @@ indirect_addr_gpr_plus_offset: TOK_GPR TOK_PLUS TOK_CONSTANT {
                             | TOK_GPR TOK_MINUS TOK_CONSTANT {
         s->base_reg = $1;
         s->disp_valid = 1;
-        s->disp_val = XED_CAST(xed_uint64_t, -$3.value); /* Use negative constant */
+        s->disp_val = -XED_CAST(xed_int64_t, $3.value); /* Use negative constant */
         s->disp_width_bits = $3.width_bits;
         HANDLE_ERROR(@1);
 
@@ -344,7 +348,7 @@ base_index_scale_disp: TOK_GPR TOK_PLUS TOK_GPR TOK_MULTI TOK_CONSTANT TOK_PLUS 
         s->index_reg = $3;
         s->scale_val = $5.value;
         s->disp_valid = 1;
-        s->disp_val = XED_CAST(xed_uint64_t, -$7.value); /* Use negative constant */
+        s->disp_val = -XED_CAST(xed_int64_t, $7.value); /* Use negative constant */
         s->disp_width_bits = $7.width_bits;
         HANDLE_ERROR(@1);
 };
@@ -375,7 +379,7 @@ base_vec_index_scale_disp: TOK_GPR TOK_PLUS TOK_VEC_REG TOK_MULTI TOK_CONSTANT T
         s->index_reg = $3;
         s->scale_val = $5.value;
         s->disp_valid = 1;
-        s->disp_val = XED_CAST(xed_uint64_t, -$7.value); /* Use negative constant */
+        s->disp_val = -XED_CAST(xed_int64_t, $7.value); /* Use negative constant */
         s->disp_width_bits = $7.width_bits;
         HANDLE_ERROR(@1);
 };
@@ -445,4 +449,6 @@ static void yyerror(YYLTYPE *locp, void *lexer_state,
     } else {
         fprintf(stderr, "[XED_CLIENT_ERROR] Scanner parsing error: %s\n", msg);
     }
+    (void)lexer_state;
+    (void)req;
 }

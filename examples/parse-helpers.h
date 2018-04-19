@@ -63,6 +63,8 @@ typedef struct {
     unsigned error_position; /* set when error is detected by lexer or parser */
 } parser_state_t;
 
+int invoke_parser(xed_encoder_request_t *req, parser_state_t *s, char *input);
+
 void handle_ambiguous_iclasses(xed_encoder_request_t *req, parser_state_t *s);
 
 void deduce_operand_width_gpr(xed_encoder_request_t* req, parser_state_t *s,

@@ -25,6 +25,10 @@ END_LEGAL */
 #include "xed-util.h"
 #include "parse-helpers.h"
 
+#include "intel-syntax.parser.h"
+#define YY_NO_UNISTD_H // work around flex's attempt to include unistd.h
+#include "intel-syntax.lexer.h"
+
 static void decorate_opcode_mnemonic(char* opcode, xed_uint_t max_len,
                                      const parser_state_t *s)
 {
@@ -61,11 +65,12 @@ static void decorate_opcode_mnemonic(char* opcode, xed_uint_t max_len,
         const size_t n_aliases = sizeof(aliases)/sizeof(aliases[0]);
 
         /* Resolve conditional jumps aliases */
-        for (int i = 0; i < n_aliases; i++) {
+        int i = 0;
+        for (i = 0; i < n_aliases; i++) {
             const char *from = aliases[i].from;
             const char *to = aliases[i].to;
             if(!strncmp(opcode, from, max_len)) {
-                strncpy(opcode, to, max_len);
+                xed_strncpy(opcode, to, max_len);
                 return;
             }
         }
@@ -81,7 +86,8 @@ static void decorate_opcode_mnemonic(char* opcode, xed_uint_t max_len,
 
     /* make sure string length was passed correctly */
     xed_assert(max_len > sizeof(char*));
-    char tmp[max_len];
+    char tmp[1000];
+    xed_assert(sizeof(tmp) > max_len);
     tmp[0] = '\0';
 
     if (has_front_prefix) {
@@ -100,6 +106,7 @@ static void decorate_opcode_mnemonic(char* opcode, xed_uint_t max_len,
         xed_strncat(tmp, post_prefix, max_len);
     }
 
+    /* copy back to */
     xed_strncpy(opcode, tmp, max_len);
 }
 
@@ -675,4 +682,20 @@ void specify_opsize_override(xed_encoder_request_t* req, parser_state_t *s,
         s->error_found = 1;
         break;
     }
+}
+
+int invoke_parser(xed_encoder_request_t *req, parser_state_t *s, char *input)
+{
+    void* lexer_state;
+    yylex_init(&lexer_state);
+
+    YY_BUFFER_STATE buffer = yy_scan_string(input, lexer_state);
+    int result = yyparse(lexer_state, req, s);
+    yy_delete_buffer(buffer, lexer_state);
+    yylex_destroy(lexer_state);
+
+    if (s->error_found)
+        return 1;
+    handle_ambiguous_iclasses(req, s);
+    return result;
 }

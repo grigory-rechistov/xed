@@ -26,8 +26,7 @@ END_LEGAL */
 #include "xed-examples-util.h"
 #include "xed-enc-lang.h"
 
-#include "intel-syntax.parser.h"
-#include "intel-syntax.lexer.h"
+#include "parse-helpers.h"
 
 static char xed_enc_lang_toupper(char c) {
     if (c >= 'a' && c <= 'z')
@@ -46,12 +45,11 @@ static void upcase(char* s) {
 xed_encoder_request_t
 parse_intel_syntax_request(ascii_encode_request_t areq)
 {
-
     xed_encoder_request_t req;
-    xed_encoder_request_zero_set_mode(&req,&(areq.dstate));
+    xed_encoder_request_zero_set_mode(&req, &(areq.dstate));
     parser_state_t s = (parser_state_t){
                                     .early_category = XED_CATEGORY_INVALID,
-                                    .dstate = &areq.dstate,
+                                    .dstate = 0,
                                     .operand_index = 0,
                                     .reg_num = 0,
                                     .memop_num = 0,
@@ -67,26 +65,20 @@ parse_intel_syntax_request(ascii_encode_request_t areq)
                                     .disp_width_bits = 0,
                                     .error_found = 0,
                                     };
+    s.dstate = &areq.dstate;
 
     char upcase_command[5000];
     xed_strncpy(upcase_command, areq.command, sizeof(upcase_command) -1);
     upcase(upcase_command);
 
-    void* lexer_state;
-    yylex_init (&lexer_state);
-
-    YY_BUFFER_STATE buffer = yy_scan_string(upcase_command, lexer_state);
-    int result = yyparse(lexer_state, &req, &s);
-
-    yy_delete_buffer(buffer, lexer_state);
-    yylex_destroy (lexer_state);
-
+    int result = invoke_parser(&req, &s, upcase_command);
     if (result != 0) {
         if (s.error_position) {
+            unsigned i = 0;
             /* Mark the first unparsed symbol in the input string */
             fprintf(stderr, "input: %s\n", areq.command);
             fprintf(stderr, "error: ");
-            for (unsigned i = 1; i < s.error_position; i++) {
+            for (i = 1; i < s.error_position; i++) {
                 fprintf(stderr, " ");
             }
             fprintf(stderr, "^\n");
@@ -96,13 +88,8 @@ parse_intel_syntax_request(ascii_encode_request_t areq)
         exit(1);
     }
 
-    handle_ambiguous_iclasses(&req, &s);
-
     return req;
 }
-
-// ==========================================================================
-
 
 xed_str_list_t* 
 tokenize(char const* const s,
