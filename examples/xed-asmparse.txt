@@ -1,0 +1,150 @@
+== Input syntax accepted by asmparse encoder
+
+DISCLAIMER: This document and functionality are work in progress. No guarantees
+are provided that it is correct or useful.
+
+=== Introduction
+
+Asmparse is an assembler program for Intel® 64 and IA-32 Architecture.
+
+Main properties of the assembler and its differences from other available
+assemblers are following.
+
+* Uses libxed as a backend for knowledge about instruction encodings. As such,
+  it is expected to support the complete Intel 64 instruction set with all its
+  peculiarities that are encodable in a machine instruction. All machine modes
+  are supported.
+* Single instruction: it processes one input line to generate one machine
+  instruction. If there are many lines, they are analyzed independently.
+* Non-symbolic: no high-level information such as variable names, labels,
+  constant expression etc are supported. All operands must be entities defined
+  in the architecture: literals, registers, memory references
+
+The accepted syntax, where possible, follows the notation found in the
+Intel Software Development Manual.
+
+=== Overview of Syntax
+
+The assembler is case insensitive to its input. An instruction consists of:
+
+* zero or more prefixes,
+* mnemonic opcode, and
+* zero or more operands.
+
+==== Accepted prefixes
+
+* REP, REPE - string operation prefixes
+* REPNE - string operation prefix
+* LOCK - atomic memory operations
+* XACQUIRE, XRELEASE - transactional memory prefixes for memory operations
+* DATA16, DATA32 - operand size override prefix
+* ADDR16, ADDR32 - address size override prefix
+
+Notes:
+1. Segment override prefixes are specified using memory operand syntax
+2. Prefixes may be silently dropped by the backend if they have no effect on the
+   opcode. Examples: multiple repetition of the same REP(NE) prefix, a size
+   override prefix that matches default address size etc.
+3. Prefixes that are incompatible with the opcode may be rejected by the backend.
+
+==== Mnemonic opcode
+
+Mnemonic names listed in the Intel documentation are accepted. Additionally,
+internal backend synonyms (iclass names) may be used. For example, the "CALL"
+mnemonic opcode name is aliased to "CALL_NEAR" iclass by default, so both
+strings can be used to encode the same instruction.
+
+==== Operands
+
+Operands are separated by commas. Accepted types of operands:
+
+* Literals used to encode immediate arguments or displacements
+* Long pointer literals
+* Registers
+* Memory references
+* Decorated operand specifiers
+
+===== Literals
+
+Decimal, binary, octal and hexadecimal constants are accepted. They may be
+prepended with signs "+" or "-". Examples: +1234, 0b10100110, 0777, -0xbaadc0de.
+
+===== Rules of calculation of literals widths.
+
+It is essential to know what width a literal has to be correctly encoded into an
+instruction. The following rules apply when processing numerical constants.
+
+1. All literals are dragged up to one of the following bit widths: 8, 16, 32, 64.
+2. If a numerical value is padded with leading zeros, then number of nibbles
+   is used to determine the width. Each figure then corresponds to 4 bits.
+   This is correct for hexadecimal numbers and roughly correct for decimal
+   numbers. For example, to specify a 32-bit wide zero value, use "0x00000000".
+3. Otherwise, a width wide enough to represent the number is chosen. Thus, "1"
+   is always 8 bit wide.
+
+===== Registers
+
+Regular register names used in Intel documentation can be used. Typically they
+consist of alphanumeric characters. An exception are x87 FPU register names 
+"ST(0)" to "ST(7)".
+
+===== Memory References
+
+A memory operand consists of 
+
+* memory width specifier,
+* optional "ptr",
+* address expression in square braces.
+
+Accepted memory width specifiers: byte, word, dword, qword, xmmword, ymmword,
+zmmword, mem, mem<number>. The "mem" specifier should be used with instructions 
+that accept non-standard memory widths, for example, long jumps, XSAVE family 
+etc. In such cases the assembler tries to guess the correct width. In cases 
+when it cannot correctly guess the right size, use the explicit memory width 
+in bytes following the "mem" word.
+
+The "ptr" part is only cosmetic and may be omitted.
+
+An address expression follows the regular "scale-index-base" notation:
+
+`base + index * scale + offset`
+
+Here, `base` is a general purpose registers, `index` is either a general or 
+vector register (for cases of VSIB operands), `scale` is a one of literals:
+1, 2, 4 or 8, and `offset` is an 8 bit or 32 bit literal. All parts of the
+address expression are optional.
+Note that not all combinations are correct and accepted by the backend.
+
+
+===== Decorated specifiers
+
+A number of "decorators" enclosed in curly braces can be specified.
+The list of accepted words includes:
+
+* mask registers {k0} to {k7},
+* zeroing {z},
+* broadcast specifiers {1to2} to {1to64},
+* rounding control and suppress all exceptions specifiers {sae}, {rne-sae} etc, 
+
+=== Error reporting
+
+Some errors in input command attributed to incorrectly used syntax are noticed
+and reported by the parser frontend. The error message in these cases attempts
+to describe the discovered problem.
+
+A few of syntax errors, however, pass the frontend checks but still specify 
+an un-encodable instruction and thus will be rejected by the backend.
+An error message in these cases is not as explanatory. The most common example
+is specifying an opcode with incompatible number, types or order of operands.
+
+
+=== Known limitations
+
+* Literal constant displacements of branch instructions (call, jmp, jcc) do not
+  take into account instruction length.
+* All literals are treated as signed. Because of that, for example, 0x8000
+  will be treated as a 32-bit wide as it exceeds encodable range for 16-bit 
+  signed numbers.
+*  Zero-padded literals have their width incorrectly counted for bases 2 and 8.
+
+
